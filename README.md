@@ -29,6 +29,12 @@ The code is split up into ten inter-connected Python scripts: <br/>
 3. Run *data_visualization.py* to visualize some characteristics of the output of *preprocessing_part1.py* (e.g., the lagged correlations between the predictors and the target and the class imbalance of the heat wave indices).
 4. Run *executer.py* to obtain the final prediction in form of plots and tables, which are displayed and saved to your chosen folder. This scripts takes the output of *preprocessing_part1.py* as its input.
 5. The six remaining scripts (*preprocessing_part2.py*, *prediction.py*, *reference_forecasts.py*, *metrics.py*, *plotting.py*, and *utils.py*) contain only function definitions. These functions are called by the scripts in 1-4. Running any of these six scripts on its own does not produce any output.
+  5a) *preprocessing_part2.py* contains all data preprocessing steps that must be run after the prediction lead time is fixed (e.g., creating a dataset of lagged predictors or balancing out the binary heatwave indices).
+  5b) *prediction.py* contains the machine learning algorithms' training, validation and testing steps. It also calls the functions in *preprocessing_part2.py* in order. 
+  5c) *reference_forecasts.py* computes three reference forecasts which are used as a baseline to assess the predictive power of the machine learning algorithms: persistence, climatology, and the ECMWF forecast. 
+  5d) *metrics.py* contains all functions related to the evaluation of the machine learning and reference forecasts, compared to the ground truth. For regression, RMSE and Pearson correlation are calculated. Similarly, ROC AUC and the geometric mean of the TPR and FPR are calculated for classification.
+  5e) *plotting.py* is used to plot all figures that appear in the paper [1].
+  5f) *utils.py* is a toolbox containing short functions. 
 
 ### User agreement and license 
 By downloading HW-AI you agree with the following points: <br/>
