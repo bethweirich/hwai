@@ -10,12 +10,16 @@ xarray 0.16.1 <br/>
 pandas 1.1.3 <br/>
 numpy 1.20.2 <br/>
 scipy 1.5.4 <br/>
+sklearn (or scikit-learn) 0.24.1 <br/>
+imblearn (or imbalanced-learn) 0.8.0 <br/>
 matplotlib 3.4.1 <br/>
-scikit-learn 0.24.1 <br/>
-"*Add remaining packages*"
+seaborn 0.11.1 <br/>
+eofs 1.4.0 <br/>
+
+In addition, the TIGRAMITE toolbox by J. Runge (https://github.com/jakobrunge/tigramite) is used for data visualization. 
 
 ### Input data 
-"*List the data sources and years. Refer to table in paper.*"
+"*List the data sources and years. Refer to table in paper. Alternative: provide preprocessed data after step 1 directly as a file.*"
 
 ### Code structure
 "*Describe the content of the different .py files, how they are linked to each other, in which order to run them etc.*"
