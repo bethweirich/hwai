@@ -22,5 +22,8 @@ scikit-learn 0.24.1
 ### Code structure
 "*Describe the content of the different .py files, how they are linked to each other, in which order to run them etc.*"
 
-### License 
-See the MIT License at license.txt. 
+### User agreement and license 
+By downloading HW-AI you agree with the following points: 
+1. You commit to cite HW-AI in your reports or publications if used as: E. Weirich Benet, M. Pyrina, B. Jiménez Esteve, E. Fraenkel, J. Cohen, and D. I. V. Domeisen, "*publication year*": Sub-seasonal Prediction of Central European Summer Heatwaves with Linear and Random Forest Machine Learning Models, AIES, AMS, "*issue number, page range*", DOI: "*XYZ*".
+2. The code is provided without any warranty or conditions of any kind. We assume no responsibility for errors or omissions in the results and interpretations following from application the code. See the MIT License at license.txt for the full text.
+
