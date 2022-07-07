@@ -8,12 +8,13 @@ E. Weirich Benet, M. Pyrina, B. Jiménez Esteve, E. Fraenkel, J. Cohen, and D. I
 
 ### Dependencies 
 The code was developed using Python 3.7.10 and several external libraries, which were installed with conda (https://docs.anaconda.com/anaconda/user-guide/tasks/install-packages/): 
-xarray
-pandas
-numpy
-scipy
-matplotlib
-sklearn
+xarray 0.16.1
+pandas 1.1.3
+numpy 1.20.2
+scipy 1.5.4
+matplotlib 3.4.1
+scikit-learn 0.24.1
+"*Add remaining packages*"
 
 ### Input data 
 "*List the data sources and years. Refer to table in paper.*"
