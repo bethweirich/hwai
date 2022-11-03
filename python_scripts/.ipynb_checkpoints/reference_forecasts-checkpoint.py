@@ -8,6 +8,10 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 
+
+# In[3]:
+
+
 # Import own functions
 ## Utils
 from utils import compute_ones_percentage, save_time_series
@@ -19,9 +23,8 @@ from preprocessing_part2 import select_season
 from const import dictionary
 
 
-# **----------------------------------------------------------------------------------------------------------------------------------------------**
+# In[ ]:
 
-# Function definitions 
 
 def compute_persistence_forecast(data, slice_type, start_date, end_date, target_name, _lead_time_, mid_end_date = None, mid_start_date = None):
     

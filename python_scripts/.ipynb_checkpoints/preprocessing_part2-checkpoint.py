@@ -8,10 +8,15 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import random 
+
 ## Data balance
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from collections import Counter
+
+
+# In[3]:
+
 
 # Import own functions
 ## Utils
@@ -21,9 +26,8 @@ from utils import force_split_out_of_selected_season
 from const import dictionary
 
 
-# **----------------------------------------------------------------------------------------------------------------------------------------------**
+# In[15]:
 
-# Function definitions 
 
 def bootstrap_ensemble(x):
     

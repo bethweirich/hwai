@@ -59,9 +59,8 @@ from preprocessing_part2 import (lagged_features,
 from const import dictionary
 
 
-# **----------------------------------------------------------------------------------------------------------------------------------------------**
+# In[4]:
 
-# Function definitions 
 
 class RidgeClassifierwithProba(RidgeClassifier):
     def predict_proba(self, X):
@@ -523,7 +522,7 @@ def optimize_ridge_hyperparameters(X, y, tgn_):
 # In[13]:
 
 
-def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt, 
+def train_test_multilinear_regression(X, y, pred_names, feature_names, tgn, lt, 
                                       outer_split_num__ = None):
     
     """
@@ -546,7 +545,7 @@ def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt,
     
     """   
     
-    if dictionary['verbosity'] > 0: print_model_name('Ridge Regressor')
+    if dictionary['verbosity'] > 0: print_model_name('Multilinear Regression')
     ## Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None
     
@@ -585,10 +584,10 @@ def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt,
         if dictionary['cv_type'] == 'none': save_time_series(pred_ensemble[subset], tgn, 'RR_ensemble', subset, lt, outer_split_num__)
 
     if dictionary['cv_type'] == 'none': 
-        if dictionary['optimize_linear_hyperparam']: return pred, pred_ensemble, best_a
+        if dictionary['reg_regr'] and dictionary['optimize_linear_hyperparam']: return pred, pred_ensemble, best_a
         else: return pred, pred_ensemble, None
     elif dictionary['cv_type'] == 'nested': 
-        if dictionary['optimize_linear_hyperparam']: return pred, {'train_full': None, 'test': None}, best_a
+        if dictionary['reg_regr'] and dictionary['optimize_linear_hyperparam']: return pred, {'train_full': None, 'test': None}, best_a
         else: return pred, {'train_full': None, 'test': None}, None
 
 
@@ -1042,7 +1041,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
     # 
     #     1. Regression // 2. Classification
     # 
-    #         1.1. Ridge Regressor // 2.1. Ridge Classifier (high bias, low variance)
+    #         1.1. Multilinear Regression // 2.1. Ridge Classifier (high bias, low variance)
     # 
     #         1.2. Random Forest Regressor // 2.2. Random Forest Classifier (low bias, high variance)
     
@@ -1059,8 +1058,8 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
         # **For continuous variables: t2m**
         if 'bin' not in tg_name_:
             ### 1.1. Ridge Regressor (RR)
-            pred_rr, pred_rr_ensemble, best_hyperparam_linear = train_test_ridge_regressor(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_,
-                                                                                            outer_split_num__ = outer_split_num)
+            pred_rr, pred_rr_ensemble, best_hyperparam_linear = train_test_multilinear_regression(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_,
+                                                                                                    outer_split_num__ = outer_split_num)
                                                                                                                             
             ### 1.2. Random Forest Regressor (RFR)
             pred_rfr, pred_rfr_ensemble, best_hyperparam_rf = train_test_random_forest_regressor(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_, 
@@ -1078,7 +1077,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
                                                                                                                                            balance_, balance_sign_, outer_split_num__ = outer_split_num) 
         ## 3. Best hyperparameters
         # Save best hyperparameters for Ridge
-        if dictionary['optimize_linear_hyperparam']:            
+        if dictionary['reg_regr'] and dictionary['optimize_linear_hyperparam']:            
             if outer_split_num is not None:
                 save_name = 'best_linear_hyperparam_' + balance_ + '_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num) + '.npy'
             else:

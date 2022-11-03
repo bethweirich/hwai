@@ -41,9 +41,8 @@ from utils import (filter_dates_like,
 from const import dictionary
 
 
-# **----------------------------------------------------------------------------------------------------------------------------------------------**
+# In[3]:
 
-# Function definitions 
 
 def show_multiple_time_series(dset):
     
@@ -235,7 +234,8 @@ def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, clima
         # Ground truth
         ax.plot(y.sort_index(), label = 'Ground Truth', color = 'black', linewidth = 2)
         # ML predictions
-        ax.plot(predictions_rr_df, '--', label = 'RR', color = 'crimson')
+        if dictionary['reg_regr']: ax.plot(predictions_rr_df, '--', label = 'RR', color = 'crimson')
+        else: ax.plot(predictions_rr_df, '--', label = 'RR', color = 'crimson')
         ax.plot(predictions_rfr_df, '--', label = 'RFR', color = 'dodgerblue')
         # Persistence forecast: take target value from date - lead time
         ax.plot(persistence, '--', label = 'Persistence', color = 'lightgray')
@@ -337,7 +337,8 @@ def plot_pred_time_series_all_lead_times():
             # Ground truth
             ax.plot(ground_truth, label = 'Ground Truth', color = 'dimgray', linewidth = 2)
             # ML predictions
-            ax.plot(predictions_rr, '--', label = 'RR', color = 'crimson')
+            if dictionary['reg_regr']: ax.plot(predictions_rr, '--', label = 'RR', color = 'crimson')
+            else: ax.plot(predictions_rr, '--', label = 'RR', color = 'crimson')
             ax.plot(predictions_rfr, '--', label = 'RFR', color = 'dodgerblue')
             # Persistence forecast: take target value from date - lead time
             ax.plot(persistence, '--', label = 'Persistence', color = 'lightgray')
@@ -572,8 +573,11 @@ def plot_proba_histogram(pred_proba_, tgn_, _model_name_, _lead_time_, best_thre
     plt.savefig(save_name)
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
-
     
+
+
+# In[ ]:
+
 
 def classification_plots(y, pred_proba, subset_, tgn_, model_name, lt_, best_th_ = None, _outer_split_num_ = None):
     
@@ -616,6 +620,9 @@ def classification_plots(y, pred_proba, subset_, tgn_, model_name, lt_, best_th_
     else: best_th_ix_ = None
     plot_pr_curve(precision, recall, subset_, tgn_, model_name, lt_, best_th_ix = best_th_ix_, outer_split_num_ = _outer_split_num_) 
     
+
+
+# In[13]:
 
 
 def plot_class_distr(index, tgn_):
@@ -1039,7 +1046,7 @@ def show_coeffs(_model_, model_name, _pred_names, _feature_names, _tgn_, _lead_t
 
     outputs
     -------
-    None.  Prints the coefficients of the Ridge Regressor and saves them to file
+    None.  Prints the coefficients of the Multilinear regression and saves them to file
     
     """
 

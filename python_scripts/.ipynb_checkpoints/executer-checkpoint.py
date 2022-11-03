@@ -7,6 +7,10 @@
 import time
 import xarray as xr
 
+
+# In[ ]:
+
+
 # Import own functions
 ## Utils
 from utils import (print_title,
@@ -20,21 +24,28 @@ from plotting import plot_metrics, show_hyperparameters, plot_pred_time_series_a
 ## Preprocessing
 from prediction import prepro_part2_and_prediction, prepro_part2_and_prediction_nested_cv
 
-# Import constants
+# Import dictionary
 from const import dictionary
 
-# **----------------------------------------------------------------------------------------------------------------------------------------------**
 
-# Main
+# In[ ]:
+
 
 start = time.time()
 print_datetime('executer.py')
+
+
+# ## Main
+
+# In[ ]:
+
 
 # Initialize
 metrics = {'proba_classi': [], 'classi': [], 'regr': []}
 metrics_tgns = {'proba_classi': [], 'classi': [], 'regr': []}
 
-# Loop over all targets
+# Do all computations for summer t2m and for the different hw_indices
+
 ## REGRESSION
 for _target_name in dictionary['target_names_regr']:
     if dictionary['verbosity'] > 0: print_title(_target_name)
