@@ -1,5 +1,5 @@
-# HW-AI
-### Forecasting heatwaves with AI
+# HWAI
+### Heatwave forecasting with Artificial Intelligence
 
 ### Overview
 A Python code for making AI-based sub-seasonal forecasts of summer heatwaves in central Europe. The machine learning models used are linear and random forest models, both for regression and classification tasks. This code reproduces the data and experiments presented in the pre-print: E. Weirich Benet, M. Pyrina, B. Jiménez Esteve, E. Fraenkel, J. Cohen, and D. I. V. Domeisen: *Sub-seasonal Prediction of Central European Summer Heatwaves with Linear and Random Forest Machine Learning Models*, EarthArXiv, DOI: https://doi.org/10.31223/X5663G [1]
@@ -39,7 +39,7 @@ The code is split up into ten inter-connected Python scripts, located in the *py
  The outputs from *executer.py* used for the main results (*sample_run-noCV.pdf*) and the nested cross-validation results shown in the Appendix (*sample_run-nestedCV.pdf*) are in the *sample_runs* folder. Due to their large size (about 35MB), they cannot be visualized on GitHub and must be downloaded. 
 
 ### User agreement and license 
-By downloading HW-AI you agree with the following points: <br/>
-1. You commit to cite HW-AI in your reports or publications if used as indicated above [1]. <br/>
+By downloading HWAI you agree with the following points: <br/>
+1. You commit to cite HWAI in your reports or publications if used as indicated above [1]. <br/>
 2. The code is provided without any warranty or conditions of any kind. We assume no responsibility for errors or omissions in the results and interpretations following from application the code. See the MIT License at license.txt for the full text. <br/>
 
