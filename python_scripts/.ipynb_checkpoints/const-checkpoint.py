@@ -17,13 +17,19 @@ target_names_regr = ['t2m']
 target_names_classi = ['hw_bin_1SD', 'hw_bin_15SD']
 ### Define lead times
 lead_times = [1, 2, 3, 4, 5, 6]
-### Define balance types ('undersampling', 'oversampling', 'none')
-balance_types = ['none']
 
 
 ## 1.2. Data & time periods
 ### Specify train_full, train, vali & test time period splits
 splits_data = np.array([[1981, 2009], [1981, 2000], [2001, 2009], [2010, 2018]]).T
+### Structure train-vali-test splits
+splits = xr.DataArray(splits_data,
+                        dims = ['edge', 'slice_type'],
+                        coords = {'slice_type': ['train_full', 'train', 'vali', 'test'], 'edge': ['start', 'end']})
+### Extract overall start and end years
+start_year = int(splits.sel(slice_type = 'train_full', edge = 'start'))
+end_year = int(splits.sel(slice_type = 'test', edge = 'end'))
+
 ### Cross-validation ('none', 'nested')
 ### 'none' has no loops but uses the train_full-test-train-vali partitions manually specified above instead
 ### 'nested' has an inner (train-validation) and an outer loop (train_full-test)
@@ -124,13 +130,28 @@ path_plots = '../model_output/plots/'
 ### Central Europe (CE) [45°N,55°N], [5°,15°E]
 ce = np.array([[55.,45.], [5.,15.]]).T
 ce_obs = np.array([[44.875,54.875], [4.875,14.875]]).T
+### North Atlantic [40°S,70°N], [90°W,30°E]
+na = np.array([[70.,40.], [-90., 30.]]).T
 ### North western Mediterranean (NWMED) [35°N,45°N], [0°,15°E]
 nwmed = np.array([[45.,35.], [0.,15.]]).T
 ### Cold North Atlantic anomaly (CNAA) [45°N,60°N], [15°W,40°W]
 cnaa = np.array([[60.5,45.5], [-40., -15.]]).T
+### Structure latitude-longitude boxes
+boxes = xr.concat(
+                  [xr.DataArray(
+                                X,
+                                dims = ['edge','axis'],
+                                coords = {'axis': ['latitude', 'longitude'], 'edge': ['start', 'end']})
+                                for X in (ce, ce_obs, na, nwmed, cnaa)],
+                                dim = 'box').assign_coords(box = ['Central Europe', 
+                                                                  'Central Europe E-OBS', 
+                                                                  'North Atlantic', 
+                                                                  'Northwestern Mediterranean', 
+                                                                  'Cold North Atlantic anomaly']
+                    )
 
 
-## 1.9. Long predictor names and units
+## 1.9. Long names and units
 long_predictor_names = {'t2m_x': 'Temperature',
                             'z': 'Geopotential',
                             'rain': 'Precipitation', 
@@ -152,31 +173,11 @@ units = {'t2m': '^0C',
 #  **------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
 
 # 2. Save definitions (fix)
-## 2.1. Structure train-vali-test splits
-splits = xr.DataArray(splits_data,
-                        dims = ['edge', 'slice_type'],
-                        coords = {'slice_type': ['train_full', 'train', 'vali', 'test'], 'edge': ['start', 'end']})
-
-## 2.2. Structure latitude-longitude boxes
-boxes = xr.concat(
-    [xr.DataArray(
-            X,
-            dims = ['edge','axis'],
-            coords = {'axis': ['latitude', 'longitude'], 'edge': ['start', 'end']})
-            for X in (ce, ce_obs, nwmed, cnaa)],
-            dim = 'box').assign_coords(box = ['ce', 'ce_obs', 'nwmed','cnaa'])
-
-## 2.3. Extract overall start and end years
-start_year = int(splits.sel(slice_type = 'train_full', edge = 'start'))
-end_year = int(splits.sel(slice_type = 'test', edge = 'end'))
-
-## 2.4. Make dictionary
 dictionary = { 
               'target_names': target_names_regr + target_names_classi,
               'target_names_regr': target_names_regr,
               'target_names_classi': target_names_classi,
               'lead_times': lead_times,
-              'balance_types':balance_types,
               'cv_type': cv_type,
               'hp_search_type': hp_search_type,
               'num_hp_set_candidates': num_hp_set_candidates,

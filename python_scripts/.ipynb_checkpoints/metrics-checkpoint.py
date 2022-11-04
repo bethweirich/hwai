@@ -10,10 +10,12 @@ import numpy as np
 import os
 import itertools 
 ## Metrics
-from sklearn.metrics import (confusion_matrix,
+from sklearn.metrics import (auc,
+                             confusion_matrix,
                              roc_auc_score,
                              mean_squared_error,
                              roc_curve,
+                             precision_recall_curve,
                              brier_score_loss)
 from scipy import stats
 from scipy.stats import pearsonr
@@ -29,6 +31,19 @@ from const import dictionary
 # **----------------------------------------------------------------------------------------------------------------------------------------------**
 
 # Function definitions 
+
+def pr_auc_score(y, y_pred):
+    
+    np.seterr(divide = 'ignore', invalid = 'ignore')
+    _precision, _recall, _thresholds = precision_recall_curve(y_true = y, probas_pred = y_pred)
+    # Use AUC function to calculate the area under the curve of precision recall curve
+    _auc_precision_recall = auc(_recall, _precision)
+    if np.isnan(_auc_precision_recall):
+        _auc_precision_recall = 0. 
+    np.seterr(divide = 'warn', invalid = 'warn')
+    
+    return _auc_precision_recall 
+
 
 def frequency_bias(y, y_pred):
     
@@ -305,7 +320,7 @@ def build_metrics_regr(y, predictions_rr, predictions_rfr,
 
 
 def build_metrics_classi(y, predictions_rc, predictions_rfc, 
-                         persistence, climatology, target_name, lead_time, subset, balance_type, 
+                         persistence, climatology, target_name, lead_time, subset, 
                          predictions_rc_ensemble = None, predictions_rfc_ensemble = None, 
                          ecmwf = None, outer_split_num_ = None): 
 
@@ -324,13 +339,12 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
     target_name                                str : name of target variable 
     lead_time                                  int : number of weeks for prediction lead time
     subset                                     str : 'train' or 'test'
-    balance_type                               str : 'undersampling' or 'oversampling'
     
     " predictions_rc_ensemble                 dict : set of time series of the predicted target (same
                                                      length and time as y) by the RC models trained on each leave-one-out subset "    
     " predictions_rfc_ensemble                dict : set of time series of the predicted target (same
                                                      length and time as y) by each estimator (tree) of the RFC model "                                               
-    " ecmwf                              np.array  : time series of the predicted target with ECMWF. This argument is optional. "
+    " ecmwf                               np.array : time series of the predicted target with ECMWF. This argument is optional. "
     " outer_split_num_                         int : counter for outer splits. This argument is optional. "
     
 
@@ -444,8 +458,7 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
     metrics_text[:,len_metrics:] = metrics_text[:,len_metrics:].astype(int)
     ### Dataset
     metrics_dset = xr.Dataset({'value': (('forecast', 'metric'), metrics_text)}, coords = {'forecast': forecasts_names, 'metric': metrics_names})
-    ### Expand dimension
-    metrics_dset = metrics_dset.assign_coords({'balance': balance_type})
+    
     
     ## Print table
     ### Round float metrics and keep int
@@ -459,10 +472,10 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
     metrics_table.set_fontsize(12)
     metrics_table.scale(2, 3.5) 
     ## Save plot
-    dir_name = dictionary['path_plots'] + subset + '/' + target_name + '/metrics_table/' + balance_type + '/'     
+    dir_name = dictionary['path_plots'] + subset + '/' + target_name + '/metrics_table/'   
     if outer_split_num_ != None:
-        save_name = dir_name + 'metrics_table_' + subset + '_' + target_name + '_' + balance_type + '_lead_time_' + str(lead_time) + '_weeks_outer_split_' + str(outer_split_num_) + '.png'
-    else: save_name = dir_name + 'metrics_table_' + subset + '_' + target_name + '_' + balance_type + '_lead_time_' + str(lead_time) + '_weeks.png'
+        save_name = dir_name + 'metrics_table_' + subset + '_' + target_name + '_lead_time_' + str(lead_time) + '_weeks_outer_split_' + str(outer_split_num_) + '.png'
+    else: save_name = dir_name + 'metrics_table_' + subset + '_' + target_name + '_lead_time_' + str(lead_time) + '_weeks.png'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     plt.savefig(save_name, bbox_inches = 'tight')
@@ -475,7 +488,7 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
 
 
 def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,  
-                               persistence, climatology, target_name, lead_time, subset, balance_type, 
+                               persistence, climatology, target_name, lead_time, subset, 
                                predictions_proba_rc_ensemble = None, predictions_proba_rfc_ensemble = None,
                                ecmwf = None, outer_split_num_ = None): 
 
@@ -490,7 +503,6 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
     target_name                                str : name of target variable 
     lead_time                                  int : number of weeks for prediction lead time
     subset                                     str : 'train' or 'test'
-    balance_type                               str : 'undersampling' or 'oversampling'
 
     " predictions_proba_rc_ensemble           dict : set of time series of the predicted target (same
                                                      length and time as y) by the RC models trained on each leave-one-out subset "
@@ -576,8 +588,6 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
     ## Prepare dataset
     ### Dataset
     metrics_dset = xr.Dataset({'value': (('forecast', 'metric'), metrics_text)}, coords = {'forecast': forecasts_names, 'metric': metrics_names})
-    ### Expand dimension
-    metrics_dset = metrics_dset.assign_coords({'balance': balance_type})
     
     
     ## Print table
@@ -590,10 +600,10 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
     metrics_table.set_fontsize(12)
     metrics_table.scale(0.7, 2) 
     ## Save plot    
-    dir_name = dictionary['path_plots'] + subset + '/' + target_name + '/proba_metrics_table/' + balance_type + '/' 
+    dir_name = dictionary['path_plots'] + subset + '/' + target_name + '/proba_metrics_table/'
     if outer_split_num_ != None:
-        save_name = dir_name + 'proba_metrics_table_' + subset + '_' + target_name + '_' + balance_type + '_lead_time_' + str(lead_time) + '_weeks_outer_split_' + str(outer_split_num_) + '.png'
-    else: save_name = dir_name + 'proba_metrics_table_' + subset + '_' + target_name + '_' + balance_type + '_lead_time_' + str(lead_time) + '_weeks.png'
+        save_name = dir_name + 'proba_metrics_table_' + subset + '_' + target_name + '_lead_time_' + str(lead_time) + '_weeks_outer_split_' + str(outer_split_num_) + '.png'
+    else: save_name = dir_name + 'proba_metrics_table_' + subset + '_' + target_name + '_lead_time_' + str(lead_time) + '_weeks.png'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     plt.savefig(save_name, bbox_inches='tight')
@@ -605,7 +615,7 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
 
 
 
-def save_metrics(metrics, prediction_type, subset, target_name, lead_time, balance_type, outer_split_num_ = None):
+def save_metrics(metrics, prediction_type, subset, target_name, lead_time, outer_split_num_ = None):
     
     """
     inputs
@@ -615,7 +625,6 @@ def save_metrics(metrics, prediction_type, subset, target_name, lead_time, balan
     subset                    str : 'train' or 'test'
     target_name               str : name of target variable 
     lead_time                 int : Lead time of prediction
-    balance_type              str : name of balance type 'undersampling', 'oversampling' or 'none'
     " outer_split_num_          int : counter for outer splits "
 
     outputs
@@ -626,14 +635,14 @@ def save_metrics(metrics, prediction_type, subset, target_name, lead_time, balan
     
     path = dictionary['path_metrics'] + subset + '/'
     if outer_split_num_ != None:
-        save_name = subset + '_metrics_' + prediction_type + '_' + balance_type + '_' + target_name + '_lead_time_' + str(lead_time) + '_outer_split_' + str(outer_split_num_) + '.nc'
-    else: save_name = subset + '_metrics_' + prediction_type + '_' + balance_type + '_' + target_name + '_lead_time_' + str(lead_time) + '.nc'
+        save_name = subset + '_metrics_' + prediction_type + '_' + target_name + '_lead_time_' + str(lead_time) + '_outer_split_' + str(outer_split_num_) + '.nc'
+    else: save_name = subset + '_metrics_' + prediction_type + '_' + target_name + '_lead_time_' + str(lead_time) + '.nc'
 
     save_to_file(metrics, path, save_name, 'nc')
     
 
     
-def construct_metrics_dset(tgn, pred_type, subset, balance_type):
+def construct_metrics_dset(tgn, pred_type, subset):
     
     """
     inputs
@@ -641,7 +650,6 @@ def construct_metrics_dset(tgn, pred_type, subset, balance_type):
     tgn                              str : name of target variable 
     pred_type                        str : 'regr', 'classi' or 'proba_classi'
     subset                           str : 'train' or 'test'
-    balance_type                     str : name of balance type 'undersampling', 'oversampling' or 'none'
 
 
     outputs
@@ -658,12 +666,12 @@ def construct_metrics_dset(tgn, pred_type, subset, balance_type):
         # Nested CV
         if dictionary['cv_type'] == 'nested':
             for outer_split in np.arange(1, dictionary['num_outer_folds'] + 1):    
-                file_name = path + subset + '_metrics_' + pred_type + '_' + balance_type + '_' + tgn + '_lead_time_' + str(lead_time) + '_outer_split_' + str(outer_split) + '.nc'
+                file_name = path + subset + '_metrics_' + pred_type + '_' + tgn + '_lead_time_' + str(lead_time) + '_outer_split_' + str(outer_split) + '.nc'
                 metrics_lt.append(xr.open_dataset(file_name).assign_coords(outer_split = outer_split).expand_dims('outer_split'))   
             metrics_dset = xr.concat(metrics_lt, dim = 'outer_split')
         # Not nested CV
         if dictionary['cv_type'] == 'none':
-            file_name = path + subset + '_metrics_' + pred_type + '_' + balance_type + '_' + tgn + '_lead_time_' + str(lead_time) + '.nc'
+            file_name = path + subset + '_metrics_' + pred_type + '_' + tgn + '_lead_time_' + str(lead_time) + '.nc'
             metrics_dset = xr.open_dataset(file_name)
         metrics.append(metrics_dset.assign_coords(lead_time = lead_time).expand_dims('lead_time'))     
     metrics = xr.concat(metrics, dim = 'lead_time') 

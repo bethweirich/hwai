@@ -17,7 +17,6 @@ from const import dictionary
 
 
 # **----------------------------------------------------------------------------------------------------------------------------------------------**
-
 # Class definitions 
 
 class text_format:
@@ -49,7 +48,6 @@ class text_format:
     
 
 # **----------------------------------------------------------------------------------------------------------------------------------------------**
-
 # Function definitions 
 
 def traverse(d):
@@ -196,8 +194,7 @@ def print_datetime(script_name):
 
     print(text_format.YELLOW_HIGHLIGHT + 'Output from ', script_name, ' run at ', datetime.now(), text_format.END)
 
-
-# In[11]:
+    
 
 
 def print_title(tgn):
@@ -224,28 +221,6 @@ def print_title(tgn):
         print(text_format.RED_HIGHLIGHT + 'Summer temperature', text_format.END)
 
 
-# In[12]:
-
-
-def print_balance(balance_type):
-    
-    """
-    inputs
-    ------
-    balance_type       str : type of balance e.g. 'undersampling'
-
-
-    outputs
-    -------
-    None. Prints the highlighted type of balance
-    
-    """
-    
-    print(text_format.BLUE_HIGHLIGHT + 'Balance: ' + balance_type, text_format.END)
-
-
-# In[13]:
-
 
 def print_lead_time(lead_time):
 
@@ -263,8 +238,6 @@ def print_lead_time(lead_time):
 
     print(text_format.TURQUOISE_HIGHLIGHT + 'Lead time: ' + str(lead_time) + ' week(s)', text_format.END)  
 
-
-# In[14]:
 
 
 def print_model_name(model_name):
@@ -284,8 +257,6 @@ def print_model_name(model_name):
 
     print(text_format.GREY_HIGHLIGHT + model_name, text_format.END)
 
-
-# In[15]:
 
 
 def save_to_file(my_object, path, save_name, file_format):
@@ -327,7 +298,6 @@ def save_to_file(my_object, path, save_name, file_format):
     if dictionary['verbosity'] > 2: print('New file ', save_name, 'saved to ', path)
 
 
-# In[87]:
 
 
 def compute_ones_percentage(binary_object, object_name, show_position):
@@ -362,8 +332,6 @@ def compute_ones_percentage(binary_object, object_name, show_position):
         
 
 
-# In[18]:
-
 
 def filter_dates_like(y, x):
  
@@ -386,7 +354,6 @@ def filter_dates_like(y, x):
     return y_filtered
 
 
-# In[19]:
 
 
 def month_to_season(var_mon, sea):
@@ -415,8 +382,6 @@ def month_to_season(var_mon, sea):
     return var_sea
 
 
-# In[20]:
-
 
 def flip_longitude_360_2_180(var_360, lon):
     
@@ -439,7 +404,6 @@ def flip_longitude_360_2_180(var_360, lon):
     return var_180 
 
 
-# In[32]:
 
 
 def format_fn_y(tick_val, tick_pos):
@@ -449,8 +413,6 @@ def format_fn_y(tick_val, tick_pos):
     else:
         return ''
 
-
-# In[6]:
 
 
 # Hatch non-significant grid cells
@@ -469,8 +431,6 @@ def hatch_non_significant_cells(ax, p_matrix, target_pos, tau_max):
                   alpha = 0.5)
 
 
-# In[7]:
-
 
 # Set the colormap and centre the colorbar
 class MidpointNormalize(colors.Normalize):
@@ -482,8 +442,6 @@ class MidpointNormalize(colors.Normalize):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
 
-
-# In[5]:
 
 
 def save_time_series(x, tgn, time_series_type, subset, _lead_time_, outer_split_num_ = None):
@@ -522,8 +480,6 @@ def save_time_series(x, tgn, time_series_type, subset, _lead_time_, outer_split_
     save_to_file(x, path, save_name, 'np')
     
 
-
-# In[5]:
 
 
 def read_old_regr_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
@@ -577,17 +533,15 @@ def read_old_regr_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
     elif dictionary['cv_type'] == 'nested': return pred_rr, {'train_full': None, 'test': None}, pred_rfr, {'train_full': None, 'test': None}
 
 
-# In[6]:
 
 
-def read_old_classi_ml_forecasts(tgn, _lead_time_, balance_sign_, outer_split_num_ = None):
+def read_old_classi_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
     
     """
     inputs
     ------
     tgn                            str : name of target
     _lead_time_                    int : lead time of prediction in weeks
-    balance_sign_                  str : '' (none), '+' (oversampled) or '-' (undersampled)
     " outer_split_num_             int : counter for outer splits. This argument is optional. "
 
     
@@ -607,12 +561,8 @@ def read_old_classi_ml_forecasts(tgn, _lead_time_, balance_sign_, outer_split_nu
     # Specify directory
     path = dictionary['path_time_series'] + tgn + '/'
     # Make combinations of models and subsets
-    if dictionary['cv_type'] == 'none':
-        models = ['RC', 'RC_ensemble', 'RFC', 'RFC_ensemble']
-        models_sign = ['RC' + balance_sign_, 'RC' + balance_sign_ + '_ensemble', 'RFC' + balance_sign_, 'RFC' + balance_sign_ + '_ensemble']
-    elif dictionary['cv_type'] == 'nested':
-        models = ['RC', 'RFC', 'RFC_ensemble']
-        models_sign = ['RC' + balance_sign_, 'RFC' + balance_sign_, 'RFC' + balance_sign_ + '_ensemble']
+    if dictionary['cv_type'] == 'none': models = ['RC', 'RC_ensemble', 'RFC', 'RFC_ensemble']
+    elif dictionary['cv_type'] == 'nested': models = ['RC', 'RFC', 'RFC_ensemble']
     pred_type = ['_proba', '']
     subsets = ['test', 'train_full']
     combinations = list(itertools.product(subsets, pred_type, zip(models, models_sign)))
@@ -643,9 +593,6 @@ def read_old_classi_ml_forecasts(tgn, _lead_time_, balance_sign_, outer_split_nu
     
     if dictionary['cv_type'] == 'none': return pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble, pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble
     elif dictionary['cv_type'] == 'nested': pred_rc, {'train_full': None, 'test': None}, pred_proba_rc, {'train_full': None, 'test': None}, pred_rfc, {'train_full': None, 'test': None}, pred_proba_rfc, {'train_full': None, 'test': None}
-
-
-# In[ ]:
 
 
 

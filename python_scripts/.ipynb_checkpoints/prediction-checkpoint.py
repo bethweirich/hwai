@@ -51,7 +51,6 @@ from preprocessing_part2 import (lagged_features,
                                  split_sets, 
                                  split_sets_nested_cv, 
                                  select_season, 
-                                 data_balance, 
                                  bootstrap_ensemble, 
                                  loo_ensemble_rdm)
 
@@ -59,8 +58,9 @@ from preprocessing_part2 import (lagged_features,
 from const import dictionary
 
 
-# In[4]:
+# **----------------------------------------------------------------------------------------------------------------------------------------------**
 
+# Function definitions 
 
 class RidgeClassifierwithProba(RidgeClassifier):
     def predict_proba(self, X):
@@ -130,17 +130,16 @@ def predict_classi(model1, model2, X, th):
 # In[9]:
 
 
-def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _balance_type_, _lead_time_, outer_split_num__ = None):
+def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _lead_time_, outer_split_num__ = None):
     
     """
     inputs
     ------
     model                    function : ML model (not trained)
     model_name                    str : 'RC' or 'RFC'
-    X              dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y            dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X              dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y            dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     tgn_                          str : target name
-    _balance_type_                str : name of balance type 'undersampling', 'oversampling' or 'none'
     _lead_time_                   int : lead time for prediction
     " outer_split_num__           int : counter for outer splits "
 
@@ -160,8 +159,7 @@ def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _balance_t
     ## Nested-CV: Use 2 inner splits of the train_full set
     elif dictionary['cv_type'] == 'nested': ens = ''
     ## Select sets
-    if _balance_type_ == 'none': (X_train, y_train) = (X['train' + ens], y['train' + ens])
-    else: (X_train, y_train) = (X['train' + ens + '_bal'], y['train' + ens + '_bal'])
+    (X_train, y_train) = (X['train' + ens], y['train' + ens])
     (X_vali, y_vali) = (X['vali' + ens], y['vali' + ens])
         
     # Initialize 
@@ -210,21 +208,18 @@ def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _balance_t
     return best_threshold
 
 
-# In[10]:
 
-
-def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_time_, balance_type_, outer_split_num___ = None):
+def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_time_, outer_split_num___ = None):
     
     """
     inputs
     ------
     
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus), vali, and test time periods
     optimize_metric_                    str : metric to optimize: Regression ('Corr', 'RMSE'), Classification ('ROC AUC', 'PR AUC', 'BS')
     tgn_                                str : name of target variable
     _lead_time_                         int : lead time of prediction in weeks
-    balance_type_                       str : name of balance type 'undersampling', 'oversampling' or 'none'
     " outer_split_num___                int : counter for outer splits "
     
 
@@ -254,8 +249,7 @@ def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_t
     ## Number of trees in random forest
     n_estimators = [50, 100, 200, 400, 600]
     ## Minimum number of samples required at each leaf node
-    if balance_type_ != 'none': first_guess_min_samples_leaf = int(len(X['train_full_bal'])/100)
-    else: first_guess_min_samples_leaf = int(len(X['train_full'])/100)
+    first_guess_min_samples_leaf = int(len(X['train_full'])/100)
     step_min_samples_leaf = int(first_guess_min_samples_leaf/5)
     if step_min_samples_leaf < 1: step_min_samples_leaf = 1
     min_samples_leaf = np.arange(first_guess_min_samples_leaf - 5*step_min_samples_leaf, first_guess_min_samples_leaf + 10*step_min_samples_leaf, step_min_samples_leaf)
@@ -363,7 +357,7 @@ def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_t
                                     n_jobs = dictionary['n_cores'])
             
     ## Make dataset with best hyperparameters
-    if 'bin' in tgn_: forecast_names = ['RFC_' + balance_type_]
+    if 'bin' in tgn_: forecast_names = ['RFC']
     elif 'bin' not in tgn_: forecast_names = ['RFR']
     ### Build dataset
     best_hp_set_list = list(best_hp_set.values())
@@ -378,17 +372,14 @@ def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_t
     return best_rf, best_rf_hyperparameters_dset_
 
 
-# In[11]:
 
-
-def quick_choose_random_forest_hyperparameters(tgn_, _lead_time_, balance_type_, outer_split_num_ = None):
+def quick_choose_random_forest_hyperparameters(tgn_, _lead_time_, outer_split_num_ = None):
     
     """
     inputs
     ------
     tgn_                          str : name of target variable
     _lead_time_                   int : lead time of prediction in weeks
-    balance_type_                 str : name of balance type 'undersampling', 'oversampling' or 'none'
     " outer_split_num_            int : counter of outer split for nested CV "
 
     outputs
@@ -406,9 +397,9 @@ def quick_choose_random_forest_hyperparameters(tgn_, _lead_time_, balance_type_,
     ## Specifiy file to read
     path = dictionary['path_hyperparam']
     if outer_split_num_ is not None:
-        file_name = path + 'best_rf_hyperparam_' + balance_type_ + '_' + tgn_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num_) + '.nc'
+        file_name = path + 'best_rf_hyperparam_' + tgn_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num_) + '.nc'
     else:
-        file_name = path + 'best_rf_hyperparam_' + balance_type_ + '_' + tgn_ + '_lead_time_' + str(_lead_time_) + '.nc'
+        file_name = path + 'best_rf_hyperparam_' + tgn_ + '_lead_time_' + str(_lead_time_) + '.nc'
     ## Read
     hyperparam_dset = xr.open_dataset(file_name)
     ## Extract hyperparameters
@@ -455,8 +446,8 @@ def optimize_ridge_hyperparameters(X, y, tgn_):
     """
     inputs
     ------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     tgn_                                str : name of target variable
 
     outputs
@@ -519,17 +510,16 @@ def optimize_ridge_hyperparameters(X, y, tgn_):
     return best_model, best_alpha
 
 
-# In[13]:
 
 
-def train_test_multilinear_regression(X, y, pred_names, feature_names, tgn, lt, 
+def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt, 
                                       outer_split_num__ = None):
     
     """
     inputs
     ------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     pred_names                         list : (of strings) names of all predictors ordered like in X
     feature_names                      list : (of strings) names of all features ordered like in X
     tgn                                 str : name of target
@@ -545,7 +535,7 @@ def train_test_multilinear_regression(X, y, pred_names, feature_names, tgn, lt,
     
     """   
     
-    if dictionary['verbosity'] > 0: print_model_name('Multilinear Regression')
+    if dictionary['verbosity'] > 0: print_model_name('Ridge Regressor')
     ## Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None
     
@@ -584,28 +574,26 @@ def train_test_multilinear_regression(X, y, pred_names, feature_names, tgn, lt,
         if dictionary['cv_type'] == 'none': save_time_series(pred_ensemble[subset], tgn, 'RR_ensemble', subset, lt, outer_split_num__)
 
     if dictionary['cv_type'] == 'none': 
-        if dictionary['reg_regr'] and dictionary['optimize_linear_hyperparam']: return pred, pred_ensemble, best_a
+        if dictionary['optimize_linear_hyperparam']: return pred, pred_ensemble, best_a
         else: return pred, pred_ensemble, None
     elif dictionary['cv_type'] == 'nested': 
-        if dictionary['reg_regr'] and dictionary['optimize_linear_hyperparam']: return pred, {'train_full': None, 'test': None}, best_a
+        if dictionary['optimize_linear_hyperparam']: return pred, {'train_full': None, 'test': None}, best_a
         else: return pred, {'train_full': None, 'test': None}, None
 
 
-# In[14]:
 
 
-def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt, bal, outer_split_num__ = None):
+def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt, outer_split_num__ = None):
 
     """
     inputs
     ------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     pred_names                         list : (of strings) names of all predictors ordered like in X
     feature_names                      list : (of strings) names of all features ordered like in X
     tgn                                 str : name of target
     lt                                  int : lead time of prediction in weeks
-    bal                                 str : name of balance type 'undersampling', 'oversampling' or 'none'
     " outer_split_num__                 int : counter of outer split for nested CV "
 
     
@@ -624,10 +612,10 @@ def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt,
     
     ## Initialize Random Forest Regressor model with best hyperparameters
     if dictionary['optimize_rf_hyperparam'] is False:
-        rfr = quick_choose_random_forest_hyperparameters(tgn, lt, bal, outer_split_num_ = outer_split_num__) 
+        rfr = quick_choose_random_forest_hyperparameters(tgn, lt, outer_split_num_ = outer_split_num__) 
     elif dictionary['optimize_rf_hyperparam']:
         if dictionary['verbosity'] > 1: print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
-        rfr, best_hp = optimize_random_forest_hyperparameters(X, y, dictionary['metric_regr'], tgn, lt, bal, outer_split_num___ = outer_split_num__)
+        rfr, best_hp = optimize_random_forest_hyperparameters(X, y, dictionary['metric_regr'], tgn, lt, outer_split_num___ = outer_split_num__)
     ### Initialize ensemble for uncertainty estimation
     if dictionary['cv_type'] == 'none': rfr_ens = {key:sklearn.base.clone(rfr) for key in X['train_full_bootstrap']}
 
@@ -673,23 +661,18 @@ def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt,
         else: return pred, {'train_full': None, 'test': None}, None
 
 
-# In[15]:
 
-
-def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, bal_sign, 
-                                outer_split_num__ = None):
+def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, outer_split_num__ = None):
 
     """
     inputs
     -------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     pred_names                         list : (of strings) names of all predictors ordered like in X
     feature_names                      list : (of strings) names of all features ordered like in X
     tgn                                 str : name of target
     lt                                  int : lead time of prediction in weeks
-    bal                                 str : name of balance type 'undersampling', 'oversampling' or 'none'
-    bal_sign                            str : '' (none), '+' (oversampled) or '-' (undersampled)
     " outer_split_num__                 int : counter of outer split for nested CV "
     " inner_split_num__                 int : counter of inner split for nested CV "
 
@@ -707,10 +690,6 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, b
     # Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None
     
-    # Save balance
-    if bal != 'none': subset_end = '_bal'
-    else: subset_end = ''
-    
     # Choose model
     if dictionary['verbosity'] > 0: print_model_name('Ridge Classifier')        
     if dictionary['optimize_linear_hyperparam'] is False: rc = RidgeClassifierwithProba(alpha = 1.0, normalize = False, max_iter = 1000)
@@ -727,7 +706,7 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, b
         rc_ens = {}
         rc_ens_base = {}
         rc_ens_calib = {}
-        for key in X['train_full_bootstrap' + subset_end]: 
+        for key in X['train_full_bootstrap']: 
             rc_ens[key] = sklearn.base.clone(rc)
             rc_ens_base[key] = sklearn.base.clone(rc)
 
@@ -742,19 +721,19 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, b
             rc_calib.fit(X['vali'][key], y['vali'][key]) 
         ### Ensemble prediction
         if dictionary['cv_type'] == 'none': 
-            for key in X['train_full_bootstrap' + subset_end]:             
-                rc_ens_base[key].fit(X['train_full_bootstrap' + subset_end][key], y['train_full_bootstrap' + subset_end][key])
+            for key in X['train_full_bootstrap']:             
+                rc_ens_base[key].fit(X['train_full_bootstrap'][key], y['train_full_bootstrap'][key])
                 rc_ens_calib[key] = CalibratedClassifierCV(rc_ens_base[key], method = 'sigmoid', cv = 'prefit', n_jobs = dictionary['n_cores'])  
                 rc_ens_calib[key].fit(X['vali_oob'][key], y['vali_oob'][key])         
     ## Train non-calibrated model
     if dictionary['verbosity'] > 1: print('******************************************* TRAIN NON-CALIBRATED MODEL WITH TRAIN_FULL *********************************************')    
     ### Find best threshold to binarize probability prediction (use non-calibrated model which corresponds to the binary classification)
-    best_th = choose_best_proba_threshold_classi(rc, 'RC', X, y, tgn, bal, lt, outer_split_num__ = outer_split_num__)   
+    best_th = choose_best_proba_threshold_classi(rc, 'RC', X, y, tgn, lt, outer_split_num__ = outer_split_num__)   
     ### Individual prediction
-    rc.fit(X['train_full' + subset_end], y['train_full' + subset_end])
+    rc.fit(X['train_full'], y['train_full'])
     ### Ensemble prediction
     if dictionary['cv_type'] == 'none': 
-        for key in X['train_full_bootstrap' + subset_end]: rc_ens[key].fit(X['train_full_bootstrap' + subset_end][key], y['train_full_bootstrap' + subset_end][key]) 
+        for key in X['train_full_bootstrap']: rc_ens[key].fit(X['train_full_bootstrap'][key], y['train_full_bootstrap'][key]) 
     ### Plot coefficients
     if dictionary['verbosity'] > 1: show_coeffs(rc, 'RC', pred_names, feature_names, tgn, lt, outer_split_num__)
     
@@ -766,7 +745,7 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, b
         if dictionary['verbosity'] > 1: print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')    
         if dictionary['cv_type'] == 'none': 
             ### Make ensemble of predictions based on models trained on subsets of train_full
-            for key in X['train_full_bootstrap' + subset_end]: 
+            for key in X['train_full_bootstrap']: 
                 if dictionary['calibrate_linear']: 
                     ## Using calibrated model for probabilistic prediction and non-calibrated model for binary classification
                     pred_ensemble_key, pred_proba_ensemble_key, pred_proba_4bin_ensemble_key = predict_classi(rc_ens[key], rc_ens_calib[key], X[subset], best_th)
@@ -798,7 +777,7 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, b
             plt.close()
                 
         ## Save time series
-        model_name = 'RC' + bal_sign
+        model_name = 'RC'
         save_time_series(pred[subset], tgn, model_name, subset, lt, outer_split_num__) 
         save_time_series(pred_proba[subset], tgn, model_name, subset + '_proba', lt, outer_split_num__) 
         if dictionary['cv_type'] == 'none':
@@ -828,23 +807,19 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, bal, b
             
 
 
-# In[16]:
 
-
-def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt, bal, bal_sign, outer_split_num__ = None):
+def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt, outer_split_num__ = None):
     
     """
     inputs
     -------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     pred_names                         list : (of strings) names of all predictors ordered like in X
     feature_names                      list : (of strings) names of all features ordered like in X
     tgn                                 str : name of target
     lt                                  int : lead time of prediction in weeks
-    bal                                 str : name of balance type 'undersampling', 'oversampling' or 'none'
-    bal_sign                            str : '' (none), '+' (oversampled) or '-' (undersampled)
-    " outer_split_num__                 int : counter of outer split for nested CV "s
+    " outer_split_num__                 int : counter of outer split for nested CV "
 
     
     outputs
@@ -860,17 +835,13 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
     # Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None 
     
-    # Save balance
-    if bal != 'none': subset_end = '_bal'
-    else: subset_end = ''
-    
     # Initialize Classification Random Forest model with best hyperparameters
     if dictionary['verbosity'] > 0: print_model_name('Random Forest Classifier')        
     if dictionary['optimize_rf_hyperparam'] is False:
-        rfc = quick_choose_random_forest_hyperparameters(tgn, lt, bal, outer_split_num_ = outer_split_num__)
+        rfc = quick_choose_random_forest_hyperparameters(tgn, lt, outer_split_num_ = outer_split_num__)
     else: 
         if dictionary['verbosity'] > 1: print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
-        rfc, best_hp = optimize_random_forest_hyperparameters(X, y, dictionary['metric_classi'], tgn, lt, bal, outer_split_num___ = outer_split_num__)      
+        rfc, best_hp = optimize_random_forest_hyperparameters(X, y, dictionary['metric_classi'], tgn, lt, outer_split_num___ = outer_split_num__)      
     ## Initialize calibrated model
     if dictionary['calibrate_rf']: 
         model_type = 'calibrated' 
@@ -881,7 +852,7 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
         rfc_ens = {}
         rfc_ens_base = {}
         rfc_ens_calib = {}
-        for key in X['train_full_bootstrap' + subset_end]: 
+        for key in X['train_full_bootstrap']: 
             rfc_ens[key] = sklearn.base.clone(rfc)
             rfc_ens_base[key] = sklearn.base.clone(rfc)
 
@@ -896,19 +867,19 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
             rfc_calib.fit(X['vali'][key], y['vali'][key]) 
         ### Ensemble prediction
         if dictionary['cv_type'] == 'none': 
-            for key in X['train_full_bootstrap' + subset_end]:             
-                rfc_ens_base[key].fit(X['train_full_bootstrap' + subset_end][key], y['train_full_bootstrap' + subset_end][key])
+            for key in X['train_full_bootstrap']:             
+                rfc_ens_base[key].fit(X['train_full_bootstrap'][key], y['train_full_bootstrap'][key])
                 rfc_ens_calib[key] = CalibratedClassifierCV(rfc_ens_base[key], method = 'sigmoid', cv = 'prefit', n_jobs = dictionary['n_cores'])  
                 rfc_ens_calib[key].fit(X['vali_oob'][key], y['vali_oob'][key]) 
     ## Train non-calibrated model
     if dictionary['verbosity'] > 1: print('******************************************* TRAIN NON-CALIBRATED MODEL FOR BINARY PRED WITH TRAIN_FULL *********************************************')  
     ## Find best threshold to binarize probability prediction (use non-calibrated model which corresponds to the binary classification)
-    best_th = choose_best_proba_threshold_classi(rfc, 'RFC', X, y, tgn, bal, lt, outer_split_num__ = outer_split_num__) 
+    best_th = choose_best_proba_threshold_classi(rfc, 'RFC', X, y, tgn, lt, outer_split_num__ = outer_split_num__) 
     ### Individual prediction
-    rfc.fit(X['train_full' + subset_end], y['train_full' + subset_end])
+    rfc.fit(X['train_full'], y['train_full'])
     ### Ensemble prediction
     if dictionary['cv_type'] == 'none': 
-        for key in X['train_full_bootstrap' + subset_end]: rfc_ens[key].fit(X['train_full_bootstrap' + subset_end][key], y['train_full_bootstrap' + subset_end][key])        
+        for key in X['train_full_bootstrap']: rfc_ens[key].fit(X['train_full_bootstrap'][key], y['train_full_bootstrap'][key])        
     ## Show model characteristics    
     if dictionary['verbosity'] > 1: 
         print('Depth of trees :')
@@ -926,7 +897,7 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
         if dictionary['verbosity'] > 1: print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
         if dictionary['cv_type'] == 'none':
             ### Make ensenble of predictions based on models trained on subsets of train_full
-            for key in X['train_full_bootstrap' + subset_end]: 
+            for key in X['train_full_bootstrap']: 
                 if dictionary['calibrate_rf']: 
                     ## Using calibrated model for probabilistic prediction and non-calibrated model for binary classification
                     pred_ensemble_key, pred_proba_ensemble_key, pred_proba_4bin_ensemble_key = predict_classi(rfc_ens[key], rfc_ens_calib[key], X[subset], best_th)
@@ -958,7 +929,7 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
             plt.close()            
                                
         ## Save time series
-        model_name = 'RFC' + bal_sign
+        model_name = 'RFC'
         save_time_series(pred[subset], tgn, model_name, subset, lt, outer_split_num__) 
         save_time_series(pred_proba[subset], tgn, model_name, subset + '_proba', lt, outer_split_num__) 
         if dictionary['cv_type'] == 'none':
@@ -987,20 +958,18 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
         if dictionary['optimize_rf_hyperparam']: return pred, {'train_full': None, 'test': None}, pred_proba, {'train_full': None, 'test': None}, best_hp
         else: return pred, {'train_full': None, 'test': None}, pred_proba, {'train_full': None, 'test': None}, None
     
-
-
-# In[17]:
+    
 
 
 def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast, 
-                   start_date_test_, predictor_names_, feature_names_, tg_name_, balance_, balance_sign_, _lead_time_, 
+                   start_date_test_, predictor_names_, feature_names_, tg_name_, _lead_time_, 
                    outer_split_num = None):
         
     """
     inputs
     ------
-    X                            dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods 
-    y                          dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus balanced version), vali, and test time periods
+    X                            dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
+    y                          dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
     persist_forecast                   xr.DataArray : persistence forecast of target for train_full and testing time period
     clim_forecast                      xr.DataArray : climatology forecast of target for train_full and testing time period
     ecmwf_forecast                     xr.DataArray : ECMWF forecast of target for testing time period
@@ -1008,8 +977,6 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
     predictor_names_                           list : (of strings) names of all predictors ordered like in X
     feature_names_                             list : (of strings) names of all predictors ordered like in X
     tg_name_                                    str : name of target
-    balance_                                    str : name of balance type 'undersampling', 'oversampling' or 'none'
-    balance_sign_                               str : '' (none), '+' (oversampled) or '-' (undersampled)
     _lead_time_                                 int : lead time of prediction in weeks
     " outer_split_num                           int : counter of outer splits "
 
@@ -1041,7 +1008,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
     # 
     #     1. Regression // 2. Classification
     # 
-    #         1.1. Multilinear Regression // 2.1. Ridge Classifier (high bias, low variance)
+    #         1.1. Ridge Regressor // 2.1. Ridge Classifier (high bias, low variance)
     # 
     #         1.2. Random Forest Regressor // 2.2. Random Forest Classifier (low bias, high variance)
     
@@ -1049,7 +1016,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
     if dictionary['cv_type'] == 'none': outer_split_num = None
     # Set train_full_bootstrap ensembles to None for the case of nested CV
     if dictionary['cv_type'] == 'nested':
-        for subset in ['train_full_bootstrap', 'train_full_bootstrap_bal', 'vali_oob', 'train_th_ens', 'train_th_ens_bal', 'vali_th_ens']:
+        for subset in ['train_full_bootstrap', 'vali_oob', 'train_th_ens', 'vali_th_ens']:
             X[subset], y[subset] = [None for i in range(2)]
        
     #Train models
@@ -1058,37 +1025,57 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
         # **For continuous variables: t2m**
         if 'bin' not in tg_name_:
             ### 1.1. Ridge Regressor (RR)
-            pred_rr, pred_rr_ensemble, best_hyperparam_linear = train_test_multilinear_regression(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_,
-                                                                                                    outer_split_num__ = outer_split_num)
+            pred_rr, pred_rr_ensemble, best_hyperparam_linear = train_test_ridge_regressor(X, 
+                                                                                           y, 
+                                                                                           predictor_names_, 
+                                                                                           feature_names_, 
+                                                                                           tg_name_, 
+                                                                                           _lead_time_,
+                                                                                           outer_split_num__ = outer_split_num)
                                                                                                                             
             ### 1.2. Random Forest Regressor (RFR)
-            pred_rfr, pred_rfr_ensemble, best_hyperparam_rf = train_test_random_forest_regressor(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_, 
-                                                                                                 balance_, outer_split_num__ = outer_split_num)
+            pred_rfr, pred_rfr_ensemble, best_hyperparam_rf = train_test_random_forest_regressor(X, 
+                                                                                                 y, 
+                                                                                                 predictor_names_, 
+                                                                                                 feature_names_, 
+                                                                                                 tg_name_, 
+                                                                                                 _lead_time_, 
+                                                                                                 outer_split_num__ = outer_split_num)
 
         ## 2. Classification 
         # **For binary variables: hw_bin_2in7, hw_bin_1SD, hw_bin_15SD**
         elif 'bin' in tg_name_:
             ### 2.1. Ridge Classifier (RC)
-            pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble, best_hyperparam_linear = train_test_ridge_classifier(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_, 
-                                                                                                                                   balance_, balance_sign_, outer_split_num__ = outer_split_num)
+            pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble, best_hyperparam_linear = train_test_ridge_classifier(X, 
+                                                                                                                                   y, 
+                                                                                                                                   predictor_names_, 
+                                                                                                                                   feature_names_, 
+                                                                                                                                   tg_name_, 
+                                                                                                                                   _lead_time_, 
+                                                                                                                                   outer_split_num__ = outer_split_num)
 
             ### 2.2. Random Forest Classifier (RFC)
-            pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble, best_hyperparam_rf = train_test_random_forest_classifier(X, y, predictor_names_, feature_names_, tg_name_, _lead_time_, 
-                                                                                                                                           balance_, balance_sign_, outer_split_num__ = outer_split_num) 
+            pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble, best_hyperparam_rf = train_test_random_forest_classifier(X, 
+                                                                                                                                           y, 
+                                                                                                                                           predictor_names_, 
+                                                                                                                                           feature_names_, 
+                                                                                                                                           tg_name_, 
+                                                                                                                                           _lead_time_, 
+                                                                                                                                           outer_split_num__ = outer_split_num) 
         ## 3. Best hyperparameters
         # Save best hyperparameters for Ridge
-        if dictionary['reg_regr'] and dictionary['optimize_linear_hyperparam']:            
+        if dictionary['optimize_linear_hyperparam']:            
             if outer_split_num is not None:
-                save_name = 'best_linear_hyperparam_' + balance_ + '_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num) + '.npy'
+                save_name = 'best_linear_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num) + '.npy'
             else:
-                save_name = 'best_linear_hyperparam_' + balance_ + '_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '.npy'
+                save_name = 'best_linear_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '.npy'
             save_to_file(best_hyperparam_linear, dictionary['path_hyperparam'], save_name, 'np')        
         # Save best hyperparameters for RF's 
         if dictionary['optimize_rf_hyperparam']:            
             if outer_split_num is not None:
-                save_name = 'best_rf_hyperparam_' + balance_ + '_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num) + '.nc'
+                save_name = 'best_rf_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num) + '.nc'
             else:
-                save_name = 'best_rf_hyperparam_' + balance_ + '_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '.nc'
+                save_name = 'best_rf_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '.nc'
             save_to_file(best_hyperparam_rf, dictionary['path_hyperparam'], save_name, 'nc')
             
     # Read old saved predictions if model training deactivated
@@ -1097,7 +1084,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
                  pred_rr, pred_rr_ensemble, pred_rfr, pred_rfr_ensemble = read_old_regr_ml_forecasts(tg_name_, _lead_time_, outer_split_num_ = outer_split_num)
         if 'bin' in tg_name_:
                  (pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble,
-                  pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble) = read_old_classi_ml_forecasts(tg_name_, _lead_time_, balance_sign_, outer_split_num_ = outer_split_num)
+                  pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble) = read_old_classi_ml_forecasts(tg_name_, _lead_time_, outer_split_num_ = outer_split_num)
         
         
     ## 4. Metrics    
@@ -1107,24 +1094,27 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
         if 'bin' not in tg_name_:
             pred_type = 'regr'            
             metrics = build_metrics_regr(y[subset], pred_rr[subset], pred_rfr[subset],
-                                         persist_forecast[subset], clim_forecast[subset], tg_name_, _lead_time_, subset, 
+                                         persist_forecast[subset], clim_forecast[subset], 
+                                         tg_name_, _lead_time_, subset, 
                                          predictions_rr_ensemble = pred_rr_ensemble[subset], predictions_rfr_ensemble = pred_rfr_ensemble[subset], 
                                          ecmwf = ecmwf_forecast[subset], outer_split_num_ = outer_split_num)                   
         elif 'bin' in tg_name_:
             pred_type = 'classi'
             metrics_proba = build_metrics_proba_classi(y[subset], pred_proba_rc[subset], pred_proba_rfc[subset], 
-                                                       persist_forecast[subset], clim_forecast[subset], tg_name_, _lead_time_, subset, balance_, 
+                                                       persist_forecast[subset], clim_forecast[subset], 
+                                                       tg_name_, _lead_time_, subset, 
                                                        predictions_proba_rc_ensemble = pred_proba_rc_ensemble[subset], predictions_proba_rfc_ensemble = pred_proba_rfc_ensemble[subset],
                                                        ecmwf = ecmwf_forecast[subset], outer_split_num_ = outer_split_num)   
             
             metrics = build_metrics_classi(y[subset], pred_rc[subset], pred_rfc[subset], 
-                                           persist_forecast[subset], clim_forecast[subset], tg_name_, _lead_time_, subset, balance_, 
+                                           persist_forecast[subset], clim_forecast[subset], 
+                                           tg_name_, _lead_time_, subset, 
                                            predictions_rc_ensemble = pred_rc_ensemble[subset], predictions_rfc_ensemble = pred_rfc_ensemble[subset],
                                            ecmwf = ecmwf_forecast[subset], outer_split_num_ = outer_split_num)
         ### 4.2. Save metrics
         if 'bin' in tg_name_: 
-            save_metrics(metrics_proba, 'proba_' + pred_type, subset, tg_name_, _lead_time_, balance_, outer_split_num_ = outer_split_num)
-        save_metrics(metrics, pred_type, subset, tg_name_, _lead_time_, balance_, outer_split_num_ = outer_split_num)  
+            save_metrics(metrics_proba, 'proba_' + pred_type, subset, tg_name_, _lead_time_, outer_split_num_ = outer_split_num)
+        save_metrics(metrics, pred_type, subset, tg_name_, _lead_time_, outer_split_num_ = outer_split_num)  
 
 
     ### 5. Plots regr
@@ -1133,14 +1123,13 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
         plot_pred_time_series(y['test'], pred_rr['test'], pred_rfr['test'], persist_forecast['test'], clim_forecast['test'], ecmwf_forecast['test'], _lead_time_, tg_name_, outer_split_num_ = outer_split_num) 
 
 
-def prepro_part2_and_prediction(tg_name, balance, lead_time_):
+def prepro_part2_and_prediction(tg_name, lead_time_):
 
         
     """
     inputs
     ------
     tg_name                   str : name of target
-    balance                   str : name of balance type 'undersampling', 'oversampling' or 'none'
     lead_time_                int : lead time of prediction
 
 
@@ -1159,12 +1148,9 @@ def prepro_part2_and_prediction(tg_name, balance, lead_time_):
                                          'test': '', 
                                          'train_full': '', 
                                          'vali': '', 
-                                         'train_full_bal': '', 
                                          'train_full_bootstrap': {},
-                                         'train_full_bootstrap_bal': {}, 
                                          'vali_oob': {},
                                          'train_th_ens': {},
-                                         'train_th_ens_bal': {},
                                          'vali_th_ens': {}} for i in range(5)]
 
     ## Note: This preprocessing part must be inside the lead_time loop, since it's lead_time-dependent
@@ -1207,71 +1193,50 @@ def prepro_part2_and_prediction(tg_name, balance, lead_time_):
     if dictionary['verbosity'] > 2: print('# features in dataset: ', len(feature_names))
         
     #---------------------------------------------------------------------------------------------------------------------------------------#  
-    ## 6. Inner split
+    ## 4. Inner split
     # Split into train and validation (make sure that the splitting is in winter!) -> output: train, vali
     for subset in ['train', 'vali']:
         dset[subset], start_date[subset], end_date[subset] = split_sets(dset['train_full'], subset, lead_time_)
     
     #---------------------------------------------------------------------------------------------------------------------------------------#        
-    ## 7. Season selection
+    ## 5. Season selection
     for subset in ['train_full', 'test', 'train', 'vali']:
         dset[subset] = select_season(dset[subset], subset)
    
     #---------------------------------------------------------------------------------------------------------------------------------------#  
-    ## 8. Bootstrapping
+    ## 6. Bootstrapping
     dset['train_full_bootstrap'], dset['vali_oob'] = bootstrap_ensemble(dset['train_full'])
     
     #---------------------------------------------------------------------------------------------------------------------------------------#  
-    ## 9. Ensemble for probability threshold selection
+    ## 7. Ensemble for probability threshold selection
     dset['train_th_ens'], dset['vali_th_ens'] = loo_ensemble_rdm(dset['train_full'])
        
     #---------------------------------------------------------------------------------------------------------------------------------------#    
-    # 10. Reference forecasts 
-    persist, clim, ecmwf = compute_reference_forecasts(data, dset, start_date, end_date, tg_name, lead_time_)
+    ## 8. Reference forecasts 
+    persist, clim, ecmwf = compute_reference_forecasts(data, 
+                                                       dset, 
+                                                       start_date, 
+                                                       end_date, 
+                                                       tg_name, 
+                                                       lead_time_)
     
-    #---------------------------------------------------------------------------------------------------------------------------------------#  
-    ## 11. Balance out the data    
-    ## Save balance sign
-    if balance == 'undersampling': balance_sign = '-'
-    elif balance == 'oversampling': balance_sign = '+'
-    elif balance == 'none': balance_sign = ''
+    #---------------------------------------------------------------------------------------------------------------------------------------#    
+    ## 9. Split up the data in target (y) and predictors (X): do it for train_full, train, vali, and test sets
+    ### Drop time index for training data
+    for subset in ['train', 'train_full']:
+        dset[subset] = dset[subset].reset_index().drop(columns = 'time', axis = 1)
         
-    # Use a rdm undersampling method to reduce the number of non-hw's in the hw indices to the number of hw's (50/50)
-    ## Important to do the balancing only on the train set (also not on train_full, since it includes the validation set 
-    ## -> create extra train_full_bal, but keep train_full intact), since otherwise the model can get biased or data 
-    ## leakage can arise
-
-    ## Needed for binary heatwave indices only
-    if balance != 'none':
-        if dictionary['verbosity'] > 2: print('Train')
-        dset['train'] = data_balance(balance, dset['train'], tg_name, feature_names)
-        if dictionary['verbosity'] > 2: print('Train full')
-        dset['train_full_bal'] = data_balance(balance, dset['train_full'], tg_name, feature_names)
-        for subset in ['train_full_bootstrap', 'train_th_ens']:
-            for key in dset[subset]:
-                dset[subset + '_bal'][key] = data_balance(balance, dset[subset][key], tg_name, feature_names, show = False) 
-    else: 
-        # Drop time index for training data
-        for subset in ['train', 'train_full']:
-            dset[subset] = dset[subset].reset_index().drop(columns = 'time', axis = 1)
-    
-    #---------------------------------------------------------------------------------------------------------------------------------------#      
-    ## 12. Split up the data in target (y) and predictors (X): do it for train_full, train, vali, test and train_full_bal sets
-    for subset in ['train_full', 'test', 'train', 'vali', 'train_full_bal']:
-        if 'bal' in subset and balance == 'none':
-            y[subset], X[subset] = [None for i in range(2)]
-        else: 
-            y[subset] = dset[subset][tg_name]
-            X[subset] = dset[subset].drop(tg_name, axis = 1)    
-            
-    for subset in ['train_full_bootstrap', 'train_full_bootstrap_bal', 'vali_oob', 'train_th_ens', 'train_th_ens_bal', 'vali_th_ens']:
+    ### Split for individual forecasts
+    for subset in ['train_full', 'test', 'train', 'vali']:
+        y[subset] = dset[subset][tg_name]
+        X[subset] = dset[subset].drop(tg_name, axis = 1) 
+        
+    ### Split for ensemble of forecasts      
+    for subset in ['train_full_bootstrap', 'vali_oob', 'train_th_ens', 'vali_th_ens']:
         for key in dset[subset]:
-            if 'bal' in subset and balance == 'none':
-                y[subset][key], X[subset][key] = [None for i in range(2)]
-            else: 
-                y[subset][key] = dset[subset][key][tg_name]
-                X[subset][key] = dset[subset][key].drop(tg_name, axis = 1)
-                
+            y[subset][key] = dset[subset][key][tg_name]
+            X[subset][key] = dset[subset][key].drop(tg_name, axis = 1)  
+            
     ### Save feature names to variable
     feature_names = list(X['train_full'])
     
@@ -1291,22 +1256,17 @@ def prepro_part2_and_prediction(tg_name, balance, lead_time_):
                    persist, clim, ecmwf, 
                    start_date['test'],
                    predictor_names, feature_names, tg_name, 
-                   balance, balance_sign, 
                    lead_time_) 
     
 
 
-# In[19]:
-
-
-def prepro_part2_and_prediction_nested_cv(tg_name, balance, lead_time_):
+def prepro_part2_and_prediction_nested_cv(tg_name, lead_time_):
 
         
     """
     inputs
     ------
     tg_name                   str : name of target
-    balance                   str : name of balance type 'undersampling', 'oversampling' or 'none'
     lead_time_                int : lead time of prediction
 
 
@@ -1325,12 +1285,9 @@ def prepro_part2_and_prediction_nested_cv(tg_name, balance, lead_time_):
                                                                        'test': '', 
                                                                        'train_full': '', 
                                                                        'vali': {}, 
-                                                                       'train_full_bal': '', 
                                                                        'train_full_bootstrap': {},
-                                                                       'train_full_bootstrap_bal': {}, 
                                                                        'vali_oob': {},
                                                                        'train_th_ens': {},
-                                                                       'train_th_ens_bal': {},
                                                                        'vali_th_ens': {}} for i in range(7)]
     
     ## Note: This preprocessing part must be inside the lead_time loop, since it's lead_time-dependent
@@ -1368,11 +1325,17 @@ def prepro_part2_and_prediction_nested_cv(tg_name, balance, lead_time_):
     i = 1
     for train_full_ix, test_ix in kfold.split(data_lagged_pred):
         print('>> Outer split number ', i)        
-        dset['train_full'], dset['test'], start_date['train_full'], end_date['train_full'], start_date['test'], end_date['test'], mid_end_date['train_full'], mid_start_date['train_full'] = split_sets_nested_cv(data_lagged_pred, 
-                                                                                                                                                                                                                  train_full_ix, 
-                                                                                                                                                                                                                  test_ix, 
-                                                                                                                                                                                                                  'outer', 
-                                                                                                                                                                                                                  lead_time_)
+        (dset['train_full'], 
+         dset['test'], 
+         start_date['train_full'], 
+         end_date['train_full'], 
+         start_date['test'], 
+         end_date['test'], 
+         mid_end_date['train_full'], 
+         mid_start_date['train_full']) = split_sets_nested_cv(data_lagged_pred,                                                                                                                                                                                                             train_full_ix, 
+                                                              test_ix, 
+                                                              'outer', 
+                                                              lead_time_)
         print('\n')    
             
         ### Save variable names
@@ -1380,7 +1343,7 @@ def prepro_part2_and_prediction_nested_cv(tg_name, balance, lead_time_):
         if dictionary['verbosity'] > 2: print('# features in dataset: ', len(feature_names))
 
         #---------------------------------------------------------------------------------------------------------------------------------------#  
-        ## 6. Inner split
+        ## 4. Inner split
         # Split into train and validation (make sure that the splitting is in winter!) -> output: train, vali
         kfold = KFold(n_splits = dictionary['num_inner_folds'], shuffle = False)
         ## Initialize
@@ -1402,53 +1365,38 @@ def prepro_part2_and_prediction_nested_cv(tg_name, balance, lead_time_):
             j += 1 
 
         #---------------------------------------------------------------------------------------------------------------------------------------#        
-        ## 7. Season selection
+        ## 5. Season selection
         for subset in ['train_full', 'test']:
             dset[subset] = select_season(dset[subset], subset)
         for subset in ['train', 'vali']:
             for key in dset[subset]:
                 dset[subset][key] = select_season(dset[subset][key], subset)
-     
+      
         #---------------------------------------------------------------------------------------------------------------------------------------#    
-        #---------------------------------------------------------------------------------------------------------------------------------------#    
-        # Reference forecasts 
-        persist, clim, ecmwf = compute_reference_forecasts(data, dset, start_date, end_date, tg_name, lead_time_, mid_end_date['train_full'], mid_start_date['train_full'])
-
-        #---------------------------------------------------------------------------------------------------------------------------------------#  
-        ## 8. Balance train_full and train sets
-        ### Save balance sign
-        if balance == 'undersampling': balance_sign = '-'
-        elif balance == 'oversampling': balance_sign = '+'
-        elif balance == 'none': balance_sign = ''
-        
-        ### Use a rdm undersampling method to reduce the number of non-hw's in the hw indices to the number of hw's (50/50)
-        ### Important to do the balancing only on the train set (also not on train_full, since it includes the validation set 
-        ### -> create extra train_full_bal, but keep train_full intact), since otherwise the model can get biased or data 
-        ### leakage can arise
-        if balance != 'none':
-            ### Balance needed for binary heatwave indices only
-            if dictionary['verbosity'] > 2: print('Train full')
-            dset['train_full_bal'] = data_balance(balance, dset['train_full'], tg_name, feature_names)
-            if dictionary['verbosity'] > 2: print('Train')
-            for key in dset['train']:
-                dset['train'][key] = data_balance(balance, dset['train'][key], tg_name, feature_names)
-        else: 
-            ### Drop time index
-            dset['train_full'] = dset['train_full'].reset_index().drop(columns = 'time', axis = 1)   
-            for key in dset['train']:
-                dset['train'][key] = dset['train'][key].reset_index().drop(columns = 'time', axis = 1) 
+        ## 6. Reference forecasts 
+        persist, clim, ecmwf = compute_reference_forecasts(data, 
+                                                           dset, 
+                                                           start_date, 
+                                                           end_date, 
+                                                           tg_name, 
+                                                           lead_time_, 
+                                                           mid_end_date['train_full'], 
+                                                           mid_start_date['train_full'])
                 
 
         #---------------------------------------------------------------------------------------------------------------------------------------#      
-        ## 9. Split up the data in target (y) and predictors (X): do it for train_full, train, vali, test and train_full_bal sets
-        
-        for subset in ['train_full', 'test', 'train_full_bal']:
-            if 'bal' in subset and balance == 'none':
-                y[subset], X[subset] = [None for i in range(2)] 
-            else: 
-                y[subset] = dset[subset][tg_name]
-                X[subset] = dset[subset].drop(tg_name, axis = 1)
+        ## 7. Split up the data in target (y) and predictors (X): do it for train_full, train, vali, and test sets        
+        ### Drop time index
+        dset['train_full'] = dset['train_full'].reset_index().drop(columns = 'time', axis = 1)   
+        for key in dset['train']:
+            dset['train'][key] = dset['train'][key].reset_index().drop(columns = 'time', axis = 1) 
             
+        ### Split individual forecast
+        for subset in ['train_full', 'test']:
+            y[subset] = dset[subset][tg_name]
+            X[subset] = dset[subset].drop(tg_name, axis = 1)
+            
+        ### Split ensemble of forecasts     
         for subset in ['train', 'vali']:
             for key in dset[subset]:
                 y[subset][key] = dset[subset][key][tg_name]
@@ -1468,16 +1416,8 @@ def prepro_part2_and_prediction_nested_cv(tg_name, balance, lead_time_):
                        persist, clim, ecmwf, 
                        start_date['test'],
                        predictor_names, feature_names, tg_name, 
-                       balance, balance_sign, 
                        lead_time_,
                        i)         
 
         # Increase outer split number 
         i += 1
-
-
-# In[ ]:
-
-
-
-

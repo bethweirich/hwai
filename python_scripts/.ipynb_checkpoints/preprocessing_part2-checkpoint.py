@@ -9,15 +9,6 @@ import pandas as pd
 import numpy as np
 import random 
 
-## Data balance
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import RandomOverSampler
-from collections import Counter
-
-
-# In[3]:
-
-
 # Import own functions
 ## Utils
 from utils import force_split_out_of_selected_season
@@ -26,8 +17,9 @@ from utils import force_split_out_of_selected_season
 from const import dictionary
 
 
-# In[15]:
+# **----------------------------------------------------------------------------------------------------------------------------------------------**
 
+# Function definitions 
 
 def bootstrap_ensemble(x):
     
@@ -387,62 +379,4 @@ def lagged_features(data, target_name, lead_time):
     if dictionary['verbosity'] > 4: print('Targ_pred columns:', list(targ_pred))
     
     return targ_pred
-
-
-# In[20]:
-
-
-def data_balance(balance_type, data, target_name, lagged_variable_names, show = True): 
-    
-    """
-    inputs
-    ------
-    balance_type              str : specifies whether under-/ or oversampling should be performed
-    data             pd.Dataframe : contains time series for target and predictors at lagged times
-    target_name               str : name of target variable 
-    variable_names    list of str : names of all variables in data
-    show                     bool : if True, print comments
-
-    outputs
-    -------
-    data             pd.Dataframe : balanced time series for target and predictors
-    
-    """
-    
-    if dictionary['verbosity'] > 1 and show is True: print('*********************** Enter data_balance ************************') 
-    ## Split dataset into target and features
-    target = data[target_name].values
-    features = data.drop(target_name, axis = 1).to_xarray().to_array().transpose()
-    if dictionary['verbosity'] > 2 and show is True: print('Before (class index, number of samples): ', sorted(Counter(target).items()))
-
-    ## Controlled undersampling step
-    if balance_type == 'undersampling':
-        rus = RandomUnderSampler(random_state = 0)
-        features_resampled, target_resampled = rus.fit_resample(features, target)
-        if dictionary['verbosity'] > 2 and show is True: print('...Undersampling data...')
-            
-    ## Controlled oversampling step
-    elif balance_type == 'oversampling':
-        ros = RandomOverSampler(random_state = 0)
-        features_resampled, target_resampled = ros.fit_resample(features, target)
-        if dictionary['verbosity'] > 2 and show is True: print('...Oversampling data...')
-    if dictionary['verbosity'] > 2 and show is True: print('After (class index, number of samples): ', sorted(Counter(target_resampled).items()))
-        
-    ## Dataframe out of resampled data in chronological order
-    data_resampled = np.column_stack((target_resampled.transpose(), features_resampled))
-    df_resampled = pd.DataFrame(data = data_resampled[:,:],    
-          columns = lagged_variable_names).sort_index()  
-    
-    ## Prints 
-    if dictionary['verbosity'] > 2 and show is True:
-        print('Length before and after data balance: ', len(data), 'and:', len(df_resampled))
-    if dictionary['verbosity'] > 3 and show is True: 
-        print('# 0\'s before data balance: ', len(np.where(data[target_name] == 0)[0]))
-        print('# 1\'s before data balance: ', len(np.where(data[target_name] == 1)[0]))
-        print('# 0\'s after data balance: ', len(np.where(df_resampled[target_name] == 0)[0]))
-        print('# 1\'s after data balance: ', len(np.where(df_resampled[target_name] == 1)[0]))            
-    if dictionary['verbosity'] > 4 and show is True: print('Balanced dataframe: \n', df_resampled)
-        
-    return df_resampled     
-
 

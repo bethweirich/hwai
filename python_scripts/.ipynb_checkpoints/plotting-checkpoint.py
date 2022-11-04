@@ -15,6 +15,10 @@ matplotlib.use("agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from matplotlib import gridspec
+from matplotlib.lines import Line2D
+import cartopy.crs as ccrs
+from collections import namedtuple
+from shapely import geometry
 import string
 from scipy.stats import norm
 import seaborn as sns
@@ -30,19 +34,20 @@ from sklearn.metrics import (precision_recall_curve,
 from metrics import roc_auc_score, pr_auc_score
 ## Utils
 from utils import (filter_dates_like, 
-                     final_day_of_month, 
-                     MidpointNormalize, 
-                     format_fn_y, 
-                     hatch_non_significant_cells, 
-                     save_to_file,
-                     read_old_regr_ml_forecasts)
+                   final_day_of_month, 
+                   MidpointNormalize, 
+                   format_fn_y, 
+                   hatch_non_significant_cells, 
+                   save_to_file,
+                   read_old_regr_ml_forecasts)
 
 # Import constants
 from const import dictionary
 
 
-# In[3]:
+# **----------------------------------------------------------------------------------------------------------------------------------------------**
 
+# Function definitions 
 
 def show_multiple_time_series(dset):
     
@@ -67,8 +72,6 @@ def show_multiple_time_series(dset):
         if dictionary['verbosity'] > 0: plt.show()
         plt.close()
 
-
-# In[5]:
 
 
 def show_snao_sea_patterns(snao_eof_, sea_eof_, z500_snao_, z500_sea_):
@@ -107,9 +110,6 @@ def show_snao_sea_patterns(snao_eof_, sea_eof_, z500_snao_, z500_sea_):
     
 
 
-# In[6]:
-
-
 def show_first_x_eofs(eofs_, x):
 
     """
@@ -132,10 +132,7 @@ def show_first_x_eofs(eofs_, x):
         if dictionary['verbosity'] > 0: plt.show()
         plt.close()
         
-
-
-# In[49]:
-
+        
 
 def show_hyperparameters(tgn):
     
@@ -150,7 +147,7 @@ def show_hyperparameters(tgn):
     
     """   
     
-    if 'bin' in tgn: rf = 'RFC_' + dictionary['balance_types'][0]
+    if 'bin' in tgn: rf = 'RFC'
     else: rf = 'RFR'
         
     if dictionary['cv_type'] == 'none': 
@@ -183,9 +180,6 @@ def show_hyperparameters(tgn):
         
 
 
-# In[ ]:
-
-
 def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, climatology, ecmwf, lead_time, tgn, outer_split_num_ = None):
     
     """
@@ -216,7 +210,6 @@ def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, clima
     ## Create as many subplots as there are date ranges
     fig, axes = plt.subplots(ncols = len(drange), sharey = True, figsize = (20,5))
     fig.subplots_adjust(bottom = 0.3, wspace = 0)
-    #plt.xlabel('Time (year-month)', fontsize = 16)
 
     if ecmwf is not None:
         ecmwf = ecmwf[tgn + '_mean']
@@ -234,8 +227,7 @@ def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, clima
         # Ground truth
         ax.plot(y.sort_index(), label = 'Ground Truth', color = 'black', linewidth = 2)
         # ML predictions
-        if dictionary['reg_regr']: ax.plot(predictions_rr_df, '--', label = 'RR', color = 'crimson')
-        else: ax.plot(predictions_rr_df, '--', label = 'RR', color = 'crimson')
+        ax.plot(predictions_rr_df, '--', label = 'RR', color = 'crimson')
         ax.plot(predictions_rfr_df, '--', label = 'RFR', color = 'dodgerblue')
         # Persistence forecast: take target value from date - lead time
         ax.plot(persistence, '--', label = 'Persistence', color = 'lightgray')
@@ -255,7 +247,7 @@ def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, clima
         ax.yaxis.set_tick_params(labelsize = 16)
         
     ax.legend(bbox_to_anchor = (1.1, 1.5), loc = 'upper right')
-    if dictionary['plot_fig_title'] == True:
+    if dictionary['plot_fig_title']:
         fig.suptitle('Predicted and true ' + tgn + ' on test set at ' + str(lead_time) + ' weak(s) lead time', fontsize = 14)
     ## Save plot
     dir_name = dictionary['path_plots'] + 'test/' + tgn + '/pred_time_series/'
@@ -267,6 +259,7 @@ def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, clima
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
 
+    
 
 def plot_pred_time_series_all_lead_times():
     
@@ -337,8 +330,7 @@ def plot_pred_time_series_all_lead_times():
             # Ground truth
             ax.plot(ground_truth, label = 'Ground Truth', color = 'dimgray', linewidth = 2)
             # ML predictions
-            if dictionary['reg_regr']: ax.plot(predictions_rr, '--', label = 'RR', color = 'crimson')
-            else: ax.plot(predictions_rr, '--', label = 'RR', color = 'crimson')
+            ax.plot(predictions_rr, '--', label = 'RR', color = 'crimson')
             ax.plot(predictions_rfr, '--', label = 'RFR', color = 'dodgerblue')
             # Persistence forecast: take target value from date - lead time
             ax.plot(persistence, '--', label = 'Persistence', color = 'lightgray')
@@ -370,7 +362,7 @@ def plot_pred_time_series_all_lead_times():
         if lt == dictionary['lead_times'][-1]: ax.legend(bbox_to_anchor = (-8, .0001), loc = 'lower left', fontsize = 14)
         
     ## Title
-    if dictionary['plot_fig_title'] == True:
+    if dictionary['plot_fig_title']:
         fig.suptitle('Predicted and true 2m-air temperature on test set at 1--6 weaks lead time', fontsize = 14)
     ## Save plot
     dir_name = dictionary['path_plots'] + 'test/regr/time_series/'
@@ -381,7 +373,6 @@ def plot_pred_time_series_all_lead_times():
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
 
-# In[8]:
 
 
 def plot_roc_curve(fpr, tpr, subset, tg_name, model_name_, _lead_time, best_th_ix = None, outer_split_num_ = None, inner_split_num_ = None):
@@ -433,8 +424,6 @@ def plot_roc_curve(fpr, tpr, subset, tg_name, model_name_, _lead_time, best_th_i
     plt.close()
 
 
-# In[9]:
-
 
 def plot_pr_curve(precision, recall, subset, tg_name, model_name_, _lead_time, best_th_ix = None, outer_split_num_ = None, inner_split_num_ = None):
 
@@ -484,9 +473,6 @@ def plot_pr_curve(precision, recall, subset, tg_name, model_name_, _lead_time, b
     
 
 
-# In[ ]:
-
-
 def plot_calibration_curve(y_true, y_prob, subset, tg_name, model_name_, _lead_time, outer_split_num_ = None, inner_split_num_ = None):
 
     """
@@ -528,9 +514,6 @@ def plot_calibration_curve(y_true, y_prob, subset, tg_name, model_name_, _lead_t
     
 
 
-# In[ ]:
-
-
 def plot_proba_histogram(pred_proba_, tgn_, _model_name_, _lead_time_, best_threshold = None, outer_split_num_ = None, inner_split_num_ = None):
 
     """
@@ -560,7 +543,7 @@ def plot_proba_histogram(pred_proba_, tgn_, _model_name_, _lead_time_, best_thre
     if best_threshold: 
         plt.axvline(best_threshold, color = 'darkred', label = 'Best threshold', linewidth = 1, linestyle = '-')
         plt.legend(loc = 'best')
-    if dictionary['plot_fig_title'] == True:
+    if dictionary['plot_fig_title']:
         plt.title('Histogram of heat wave probabilities')
     plt.grid(True)
     ## Save plot
@@ -573,11 +556,8 @@ def plot_proba_histogram(pred_proba_, tgn_, _model_name_, _lead_time_, best_thre
     plt.savefig(save_name)
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
+
     
-
-
-# In[ ]:
-
 
 def classification_plots(y, pred_proba, subset_, tgn_, model_name, lt_, best_th_ = None, _outer_split_num_ = None):
     
@@ -622,9 +602,6 @@ def classification_plots(y, pred_proba, subset_, tgn_, model_name, lt_, best_th_
     
 
 
-# In[13]:
-
-
 def plot_class_distr(index, tgn_):
 
     """
@@ -644,7 +621,7 @@ def plot_class_distr(index, tgn_):
     index.plot(linewidth = 0.3, color = 'black')
     plt.xlabel('# Events', fontsize = 12)
     plt.ylabel('Time', fontsize = 12)
-    if dictionary['plot_fig_title'] == True:
+    if dictionary['plot_fig_title']:
         plt.title('Probability class distribution for '+ tgn_)
     plt.grid(True)
     ## Save plot
@@ -657,9 +634,6 @@ def plot_class_distr(index, tgn_):
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
     
-
-
-# In[5]:
 
 
 def plot_tp(metrics, ax, metrics_std = None):
@@ -684,8 +658,7 @@ def plot_tp(metrics, ax, metrics_std = None):
         
     # Prepare plot    
     ## Bar width 
-    if len(dictionary['balance_types']) > 1: bar_width = 0.1
-    else: bar_width = 0.12
+    bar_width = 0.12
     ## x axis
     xlabels = list(metrics.lead_time.values)
     ### The label locations
@@ -693,88 +666,53 @@ def plot_tp(metrics, ax, metrics_std = None):
     ax.set_xticks(x)
     ax.set_xticklabels(xlabels, rotation = 0)
     
-    # Define models, colors...
+    ## Define models, colors...
     reference_models = ['Ground Truth', 'Climatology', 'Persistence']    
-    if sorted(dictionary['balance_types']) == sorted(['oversampling', 'undersampling']): ml_models = list(itertools.product(['RC', 'RFC'], zip(['oversampling', 'undersampling'], ['+', '-'])))
-    else: ml_models = ['RC', 'RFC']
+    ml_models = ['RC', 'RFC']
     forecasts_std = ['RC_std', 'RFC_std']
-    if sorted(dictionary['balance_types']) == sorted(['oversampling', 'undersampling']): colors = ['dimgray', 'navy', 'lightgray', 'darkred', 'indianred', 'teal', 'turquoise']
-    else: colors = ['dimgray', 'navy', 'lightgray', 'darkred', 'teal']    
+    colors = ['dimgray', 'navy', 'lightgray', 'darkred', 'teal']    
     
+    ## Include ECMWF
     if 'ECMWF' in metrics.forecast:
         colors.insert(len(reference_models), 'orange')
         reference_models.append('ECMWF')
         forecasts_std.append('ECMWF_std')
-    if sorted(dictionary['balance_types']) == sorted(['oversampling', 'undersampling']):
-        reference_models = list(itertools.product(reference_models, zip(['undersampling'], [''])))
-        bar_shifts = np.linspace(-len(reference_models), len(ml_models), len(reference_models) + len(ml_models) + 1, dtype = int) 
-    else: bar_shifts = np.linspace(1 - len(reference_models), len(ml_models), len(reference_models) + len(ml_models), dtype = int) 
+    
+    ## Define positions of bars
+    bar_shifts = np.linspace(1 - len(reference_models), len(ml_models), len(reference_models) + len(ml_models), dtype = int) 
        
     ## Plot
-    all_model_characteristics = reference_models + ml_models   
-    if sorted(dictionary['balance_types']) == sorted(['oversampling', 'undersampling']):
-        for model_characteristics, color, bar_shift in zip(all_model_characteristics, colors, bar_shifts):
-            # Bar plot
-            ax.bar(x + bar_shift * bar_width, 
-                   metrics.sel(forecast = model_characteristics[0]).sel(balance = model_characteristics[1][0]).sel(metric = 'TPR').to_array().values.flatten(),
-                   label = model_characteristics[0] + '$^{' + model_characteristics[1][1] + '}$',
-                   color = color, 
-                   width = bar_width)
-        for model_characteristics, color, bar_shift, i in zip(all_model_characteristics, colors, bar_shifts, range(len(colors))):
-            # Hatch
-            ax.bar(x + bar_shift * bar_width, 
-                   metrics.sel(forecast = model_characteristics[0]).sel(balance = model_characteristics[1][0]).sel(metric = 'FPR').to_array().values.flatten(),
-                   label = 'FPR' if i == 0 else '', 
-                   edgecolor = 'black', 
-                   hatch = '//', 
-                   width = bar_width, 
-                   facecolor = 'none') 
-            # Add error bars representing uncertainty
-            if dictionary['cv_type'] == 'nested':             
-                if metrics_std.sel(forecast = model_characteristics[0]).sel(balance = model_characteristics[1][0]).sel(metric = 'TPR').to_array().values.flatten().any() > 0.0001:
+    all_model_characteristics = reference_models + ml_models    
+    for model_name, color, bar_shift in zip(all_model_characteristics, colors, bar_shifts):
+        # Bar plot
+        ax.bar(x + bar_shift * bar_width, 
+               metrics.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
+               label = model_name,
+               color = color, 
+               width = bar_width)        
+    for model_name, color, bar_shift, i in zip(all_model_characteristics, colors, bar_shifts, range(len(colors))):
+        # Hatch
+        ax.bar(x + bar_shift * bar_width, 
+               metrics.sel(forecast = model_name).sel(metric = 'FPR').to_array().values.flatten(),
+               label = 'FPR' if i == 0 else '', 
+               edgecolor = 'black', 
+               hatch = '//', 
+               width = bar_width, 
+               facecolor = 'none') 
+        # Add error bars representing uncertainty
+        if dictionary['cv_type'] == 'nested':   
+            if metrics_std.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten().any() > 0.0001:
+                ax.errorbar(x + bar_shift * bar_width, 
+                            metrics.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
+                            yerr = metrics_std.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
+                            fmt = 'o', color = 'black', capsize = 4, linewidth = 1, markersize = 2)   
+        elif dictionary['cv_type'] == 'none': 
+            for forecasts_std_substr in forecasts_std:
+                if model_name in forecasts_std_substr:
                     ax.errorbar(x + bar_shift * bar_width, 
-                                metrics.sel(forecast = model_characteristics[0]).sel(balance = model_characteristics[1][0]).sel(metric = 'TPR').to_array().values.flatten(),
-                                yerr = metrics_std.sel(forecast = model_characteristics[0]).sel(balance = model_characteristics[1][0]).sel(metric = 'TPR').to_array().values.flatten(),
-                                fmt = 'o', color = 'black', capsize = 4, linewidth = 1, markersize = 2)   
-            elif dictionary['cv_type'] == 'none': 
-                for forecasts_std_substr in forecasts_std:
-                    if model_characteristics[0] in forecasts_std_substr:
-                        ax.errorbar(x + bar_shift * bar_width, 
-                                metrics.sel(forecast = model_characteristics[0]).sel(balance = model_characteristics[1][0]).sel(metric = 'TPR').to_array().values.flatten(),
-                                yerr = metrics.sel(forecast = model_characteristics[0] + '_std').sel(balance = model_characteristics[1][0]).sel(metric = 'TPR').to_array().values.flatten(),
-                                fmt = 'o', color = 'black', capsize = 4, linewidth = 1, markersize = 2)
-                 
-    else: 
-        for model_name, color, bar_shift in zip(all_model_characteristics, colors, bar_shifts):
-            # Bar plot
-            ax.bar(x + bar_shift * bar_width, 
-                   metrics.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
-                   label = model_name,
-                   color = color, 
-                   width = bar_width)        
-        for model_name, color, bar_shift, i in zip(all_model_characteristics, colors, bar_shifts, range(len(colors))):
-            # Hatch
-            ax.bar(x + bar_shift * bar_width, 
-                   metrics.sel(forecast = model_name).sel(metric = 'FPR').to_array().values.flatten(),
-                   label = 'FPR' if i == 0 else '', 
-                   edgecolor = 'black', 
-                   hatch = '//', 
-                   width = bar_width, 
-                   facecolor = 'none') 
-            # Add error bars representing uncertainty
-            if dictionary['cv_type'] == 'nested':   
-                if metrics_std.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten().any() > 0.0001:
-                    ax.errorbar(x + bar_shift * bar_width, 
-                                metrics.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
-                                yerr = metrics_std.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
-                                fmt = 'o', color = 'black', capsize = 4, linewidth = 1, markersize = 2)   
-            elif dictionary['cv_type'] == 'none': 
-                for forecasts_std_substr in forecasts_std:
-                    if model_name in forecasts_std_substr:
-                        ax.errorbar(x + bar_shift * bar_width, 
-                                metrics.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
-                                yerr = metrics.sel(forecast = model_name + '_std').sel(metric = 'TPR').to_array().values.flatten(),
-                                fmt = 'o', color = 'black', capsize = 4, linewidth = 1, markersize = 2)
+                            metrics.sel(forecast = model_name).sel(metric = 'TPR').to_array().values.flatten(),
+                            yerr = metrics.sel(forecast = model_name + '_std').sel(metric = 'TPR').to_array().values.flatten(),
+                            fmt = 'o', color = 'black', capsize = 4, linewidth = 1, markersize = 2)
 
     ## Ticks
     plt.xticks(fontsize = 14)
@@ -820,9 +758,6 @@ def plot_metrics(metrics_full, prediction_type):
     else: metrics = metrics_full
     
     # Prepare metrics
-    if prediction_type != 'regr' and len(dictionary['balance_types']) == 1:  
-        metrics = metrics.sel(balance = dictionary['balance_types'][0])
-        if dictionary['cv_type'] == 'nested': metrics_std = metrics_std.sel(balance = dictionary['balance_types'][0])
     if prediction_type == 'regr': 
         metrics = metrics.sel(target_name = dictionary['target_names_regr'][0])
         if dictionary['cv_type'] == 'nested': metrics_std = metrics_std.sel(target_name = dictionary['target_names_regr'][0])
@@ -839,18 +774,15 @@ def plot_metrics(metrics_full, prediction_type):
         colors = ['dimgray', 'navy', 'lightgray', 'crimson', 'dodgerblue']
     elif prediction_type != 'regr': 
         forecasts_std = ['RC_std', 'RFC_std']
-        if sorted(dictionary['balance_types']) == sorted(['oversampling', 'undersampling']):
-            ml_models = list(itertools.product(['RC', 'RFC'], zip(dictionary['balance_types'],['+', '-'], ['-o', '--o'])))               
-            colors = ['dimgray', 'navy', 'lightgray', 'darkred', 'indianred', 'teal', 'turquoise']
-        else:              
-            colors = ['dimgray', 'navy', 'lightgray', 'darkred', 'teal']
+        colors = ['dimgray', 'navy', 'lightgray', 'darkred', 'teal']
+        
     # Add ECMWF
     if 'ECMWF' in metrics.forecast:
             colors.insert(len(reference_models), 'orange')
             reference_models.append('ECMWF')
             forecasts_std.append('ECMWF_std')
     
-    ## Prepare plot     
+    # Prepare plot     
     if prediction_type == 'regr': rows = len(dictionary['target_names_regr'])
     else: rows = len(dictionary['target_names_classi'])           
     columns = len(metrics_names)
@@ -868,7 +800,7 @@ def plot_metrics(metrics_full, prediction_type):
             if prediction_type == 'regr': 
                 forecasts = reference_models + ['RR', 'RFR']
                 forecasts_labels = forecasts
-            elif prediction_type != 'regr' and len(dictionary['balance_types']) == 1: forecasts = reference_models + ['RC', 'RFC']       
+            elif prediction_type != 'regr': forecasts = reference_models + ['RC', 'RFC']       
             for (forecast, forecast_label, color) in zip(forecasts, forecasts_labels, colors):
                 if dictionary['cv_type'] == 'nested': 
                     plt.errorbar(metrics.lead_time, 
@@ -922,60 +854,33 @@ def plot_metrics(metrics_full, prediction_type):
             for metric in metrics_names:
                 if prediction_type == 'classi': ax = plt.subplot(gs[index - 1])
                 else: ax = fig.add_subplot(rows, columns, index)  
-                if metric != 'TPR':
-                    if len(dictionary['balance_types']) == 1:             
-                        forecasts = reference_models + ['RC', 'RFC'] 
-                        for (forecast, color) in zip(forecasts, colors):
-                            if dictionary['cv_type'] == 'nested': 
+                if metric != 'TPR':          
+                    forecasts = reference_models + ['RC', 'RFC'] 
+                    for (forecast, color) in zip(forecasts, colors):
+                        if dictionary['cv_type'] == 'nested': 
+                            plt.errorbar(metrics.lead_time, 
+                                         metrics.sel(metric = metric, forecast = forecast, target_name = tgn).value, 
+                                         yerr = metrics_std.sel(metric = metric, forecast = forecast, target_name = tgn).value,                            
+                                         fmt = '-o', 
+                                         label = forecast, 
+                                         color = color, ecolor = color, 
+                                         capsize = 4, linewidth = 2, markersize = 4)
+                        elif dictionary['cv_type'] == 'none':
+                            plt.plot(metrics.lead_time, 
+                                     metrics.sel(metric = metric, forecast = forecast, target_name = tgn).value, 
+                                     '-o', 
+                                     label = forecast, 
+                                     color = color, 
+                                     linewidth = 2, markersize = 4)  
+                            if forecast + '_std' in forecasts_std:
                                 plt.errorbar(metrics.lead_time, 
                                              metrics.sel(metric = metric, forecast = forecast, target_name = tgn).value, 
-                                             yerr = metrics_std.sel(metric = metric, forecast = forecast, target_name = tgn).value,                            
+                                             yerr = metrics.sel(metric = metric, forecast = forecast + '_std', target_name = tgn).value,                            
                                              fmt = '-o', 
-                                             label = forecast, 
+                                             label = None, 
                                              color = color, ecolor = color, 
-                                             capsize = 4, linewidth = 2, markersize = 4)
-                            elif dictionary['cv_type'] == 'none':
-                                plt.plot(metrics.lead_time, 
-                                         metrics.sel(metric = metric, forecast = forecast, target_name = tgn).value, 
-                                         '-o', 
-                                         label = forecast, 
-                                         color = color, 
-                                         linewidth = 2, markersize = 4)  
-                                if forecast + '_std' in forecasts_std:
-                                    plt.errorbar(metrics.lead_time, 
-                                                 metrics.sel(metric = metric, forecast = forecast, target_name = tgn).value, 
-                                                 yerr = metrics.sel(metric = metric, forecast = forecast + '_std', target_name = tgn).value,                            
-                                                 fmt = '-o', 
-                                                 label = None, 
-                                                 color = color, ecolor = color, 
-                                                 capsize = 4, linewidth = 2, markersize = 4)                      
-                    elif sorted(dictionary['balance_types']) == sorted(['oversampling', 'undersampling']):  
-                        reference_models = list(itertools.product(reference_models, zip(['undersampling'],[''], ['-o'])))
-                        all_model_characteristics = reference_models + ml_models
-                        for model_characteristics, color in zip(all_model_characteristics, colors): 
-                            if dictionary['cv_type'] == 'nested': 
-                                plt.errorbar(metrics.lead_time, 
-                                             metrics.sel(metric = metric, forecast = model_characteristics[0], balance = model_characteristics[1][0], target_name = tgn).value, 
-                                             yerr = metrics_std.sel(metric = metric, forecast = model_characteristics[0], balance = dictionary['balance_types'][0], target_name = tgn).value, 
-                                             fmt = model_characteristics[1][2], 
-                                             label = model_characteristics[0] + '$^{' + model_characteristics[1][1] + '}$', 
-                                             color = color, 
-                                             capsize = 4, linewidth = 2, markersize = 4)
-                            elif dictionary['cv_type'] == 'none':
-                                plt.plot(metrics.lead_time, 
-                                             metrics.sel(metric = metric, forecast = model_characteristics[0], balance = model_characteristics[1][0], target_name = tgn).value, 
-                                             model_characteristics[1][2], 
-                                             label = model_characteristics[0] + '$^{' + model_characteristics[1][1] + '}$', 
-                                             color = color, 
-                                             linewidth = 2, markersize = 4)
-                                if model_characteristics[0] + '_std' in forecasts_std:
-                                    plt.errorbar(metrics.lead_time, 
-                                                 metrics.sel(metric = metric, forecast = model_characteristics[0], balance = model_characteristics[1][0], target_name = tgn).value, 
-                                                 yerr = metrics.sel(metric = metric, forecast = model_characteristics[0] + '_std', balance = model_characteristics[1][0], target_name = tgn).value,                            
-                                                 fmt = model_characteristics[1][2], 
-                                                 label = None, 
-                                                 color = color, ecolor = color, 
-                                             capsize = 4, linewidth = 2, markersize = 4)
+                                             capsize = 4, linewidth = 2, markersize = 4)                      
+
 
                 # Add TPR-FPR plot for binary classification
                 if prediction_type == 'classi' and metric == 'TPR':
@@ -1016,19 +921,14 @@ def plot_metrics(metrics_full, prediction_type):
             
    # Save plot
     dir_name = dictionary['path_plots'] + 'test/' + prediction_type + '/metrics_plot/'
-    if dictionary['cv_type'] == 'nested': save_name = 'metrics_lt_plot_' + prediction_type + '_nested_CV'
-    else: save_name = 'metrics_lt_plot_' + prediction_type
-    if prediction_type != 'regr' and dictionary['balance_types'] == ['oversampling']: save_name = save_name + '_only_oversampled.pdf'
-    elif prediction_type != 'regr' and dictionary['balance_types'] == ['none']: save_name = save_name + '_non_bal.pdf'
-    else: save_name = save_name + '.pdf'
+    if dictionary['cv_type'] == 'nested': save_name = 'metrics_lt_plot_' + prediction_type + '_nested_CV.pdf'
+    else: save_name = 'metrics_lt_plot_' + prediction_type + '.pdf'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     plt.savefig(dir_name + save_name, bbox_inches = 'tight')
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
 
-
-# In[ ]:
 
 
 def show_coeffs(_model_, model_name, _pred_names, _feature_names, _tgn_, _lead_time_, outer_split_num_ = None):
@@ -1046,7 +946,7 @@ def show_coeffs(_model_, model_name, _pred_names, _feature_names, _tgn_, _lead_t
 
     outputs
     -------
-    None.  Prints the coefficients of the Multilinear regression and saves them to file
+    None.  Prints the coefficients of the Ridge Regressor and saves them to file
     
     """
 
@@ -1079,7 +979,7 @@ def show_coeffs(_model_, model_name, _pred_names, _feature_names, _tgn_, _lead_t
     plt.xticks(rotation = 90)
     plt.ylabel('Regression coefficients')
     plt.xlabel('Feature')
-    if dictionary['plot_fig_title'] == True:
+    if dictionary['plot_fig_title']:
         plt.title('Regression Coefficients for ' + model_name + ' at lead time ' + str(_lead_time_) + ' week', fontsize = 14)
     ## Save plot
     dir_name = dictionary['path_plots'] + 'train/' + _tgn_ + '/features/' + model_name + '/'
@@ -1156,7 +1056,7 @@ def show_rf_imp(_rf_, _pred_names, _feature_names, _tgn_, _lead_time_, outer_spl
     plt.xticks(rotation = 90)
     plt.ylabel('Importance')
     plt.xlabel('Feature')
-    if dictionary['plot_fig_title'] == True:
+    if dictionary['plot_fig_title']:
         plt.title('Relative feature importance for RF at lead time ' + str(_lead_time_) + ' week', fontsize = '14')
     plt.grid(axis = 'y', color = '#D3D3D3', linestyle = 'solid')
     ## Save plot
@@ -1190,10 +1090,8 @@ def show_rf_imp(_rf_, _pred_names, _feature_names, _tgn_, _lead_time_, outer_spl
             display(df)
             pd.reset_option('display.max_rows', 'display.max_columns')
 
-
-# In[1]:
-
-
+            
+            
 def plot_data_histogram(t2m_anom):
     
     """
@@ -1232,7 +1130,7 @@ def plot_data_histogram(t2m_anom):
     (mu, sigma) = norm.fit(t2m_anom)
     plt.axvline(np.round(mu, decimals = 0), color = 'cornflowerblue', label = 'Std T$_{anom}$ $\mu$=%.0f' %(abs(mu)))
 
-    if dictionary['plot_fig_title'] == True: 
+    if dictionary['plot_fig_title']: 
         plt.title(r'$\mathrm{Histogram\ of\ the\ standarized\ temperature\ anomalies:}\ \mu=%.0f,\ \sigma=%.0f$' %(abs(mu), sigma))
     plt.grid(True)
     ### Add 1SD and 1.5SD lines
@@ -1253,8 +1151,6 @@ def plot_data_histogram(t2m_anom):
     
 
 
-# In[8]:
-
 
 def plot_lagged_correlation_heatmap(target_pos, y, p_matrix, long_predictor_names, N, tau_max):
     
@@ -1270,7 +1166,17 @@ def plot_lagged_correlation_heatmap(target_pos, y, p_matrix, long_predictor_name
     ax = fig.add_subplot(111)
     # Define x axis labels
     x_axis_labels = np.arange(1, tau_max + 1, step = 1)
-    heat = sns.heatmap(y[1:, target_pos, 1:tau_max + 1], xticklabels = x_axis_labels, annot = True, linewidths = 0.2, fmt = '.2f', ax = ax, cbar_ax = cbaxes, cmap = 'vlag', vmin = tmin, vmax = tmax, norm = MidpointNormalize(midpoint = 0, vmin = tmin, vmax = tmax))
+    heat = sns.heatmap(y[1:, target_pos, 1:tau_max + 1], 
+                       xticklabels = x_axis_labels, 
+                       annot = True, 
+                       linewidths = 0.2, 
+                       fmt = '.2f', 
+                       ax = ax, 
+                       cbar_ax = cbaxes, 
+                       cmap = 'vlag', 
+                       vmin = tmin, 
+                       vmax = tmax, 
+                       norm = MidpointNormalize(midpoint = 0, vmin = tmin, vmax = tmax))
     ## Hatch non-significant pixel i.e. p_value > alpha_level
     hatch_non_significant_cells(ax, p_matrix, target_pos, tau_max)
     ## Add axis labels
@@ -1292,8 +1198,71 @@ def plot_lagged_correlation_heatmap(target_pos, y, p_matrix, long_predictor_name
     save_name = dir_name + pred_set + 'lagged_correlations_' + dictionary['timestep'] + '.pdf'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
+    plt.savefig(save_name, bbox_inches = 'tight')        
+    if dictionary['verbosity'] > 0: plt.show()
+    plt.close()
+    
+    
+# Draw box
+def add_sub_region_box(ax_, sub_region_, color_, lw, ls = None):
+    if ls == None: ls = '-'
+    geom = geometry.box(minx = sub_region_.lonmin, maxx = sub_region_.lonmax, miny = sub_region_.latmin, maxy = sub_region_.latmax)
+    ax_.add_geometries([geom], crs = ccrs.PlateCarree(), alpha = 1, edgecolor = color_, facecolor = 'None', linewidth = lw, linestyle = ls, label = str(sub_region_.region_name))
+    return ax_
+    
+    
+def plot_latlon_boxes():
+    
+    # Choose map projection and define origin coordinate frame
+    geo = ccrs.PlateCarree(central_longitude = -90.) 
+    robin = ccrs.Robinson(central_longitude = 0.) 
+    # Prepare figure
+    plt.figure(figsize = (12,5))
+    ax = plt.subplot(1, 1, 1, projection = geo)
+    ax.set_extent([-100, 40, 10, 60])
+
+    # Define colors
+    box_colors = ['orange', 'orange', 'dimgray', 'c',  'darkblue']
+    lines = ['-', '-','dotted', '-', '-']
+
+    # Add gridlines
+    gl = ax.gridlines(draw_labels = True)
+    gl.xlabel_style = {'size': 14, 'color': 'k','rotation':0}
+    gl.ylabel_style = {'size': 14, 'color': 'k','rotation':0}
+
+    # Add coastlines
+    ax.coastlines(alpha = 0.5)
+
+    # Draw boxes
+    for box, box_color, line in zip(dictionary['boxes'], box_colors, lines):
+        if str(box.box.values) != 'Central Europe E-OBS':
+            Region = namedtuple('Region', field_names = ['region_name','lonmin','lonmax','latmin','latmax'])
+            sub_region =  Region(
+                region_name = box.box.values,
+                lonmin = box[0][1],
+                lonmax = box[1][1],
+                latmin = box[1][0],
+                latmax = box[0][0])
+            ax = add_sub_region_box(ax, sub_region, box_color, 4, ls = line)    
+
+    # Add legend
+    box_names = list(dictionary['boxes'].box.values)
+    box_names.remove('Central Europe E-OBS')
+    custom_lines = [Line2D([0], [0], color = box_colors[1], lw = 4),
+                    Line2D([0], [0], color = box_colors[2], lw = 4, linestyle = 'dotted'),
+                    Line2D([0], [0], color = box_colors[3], lw = 4),
+                    Line2D([0], [0], color = box_colors[4], lw = 4)]
+    ax.legend(custom_lines, box_names, bbox_to_anchor = (0., 0.), loc = 'lower left', fontsize = 14)
+
+    # Add title
+    if dictionary['plot_fig_title']: plt.title('Location of boxes', fontsize = 14)
+
+    # Save plot
+    dir_name = dictionary['path_plots'] + 'data_visualization/'
+    save_name = dir_name + 'boxes.pdf'
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
     plt.savefig(save_name, bbox_inches = 'tight')
-        
     if dictionary['verbosity'] > 0: plt.show()
     plt.close()
         

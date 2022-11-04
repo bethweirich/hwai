@@ -15,7 +15,11 @@ from tigramite.independence_tests import ParCorr
 # Import own functions
 from preprocessing_part2 import select_season
 from utils import compute_ones_percentage, mask_months
-from plotting import plot_data_histogram, plot_lagged_correlation_heatmap, plot_class_distr, show_multiple_time_series
+from plotting import (plot_data_histogram, 
+                      plot_lagged_correlation_heatmap, 
+                      plot_class_distr, 
+                      show_multiple_time_series, 
+                      plot_latlon_boxes)
 
 # Import constants
 from const import dictionary
@@ -125,5 +129,8 @@ for tgn in tgns:
     print('Number of heatwave events: ', hw_count)
     print('Number of non-heatwave events: ', len(y) - hw_count)
     print('\n')
+    
+## 6. Latitude-longitude boxes
+plot_latlon_boxes()
 
 
