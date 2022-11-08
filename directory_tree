@@ -1,0 +1,131 @@
+hwai
+├── data
+│   └── ecmwf
+│       ├── ensemble_mean
+│       └── ensemble_members
+├── model_output
+│   ├── hyperparameters
+│   │   ├── data
+│   │   │   ├── linear
+│   │   │   └── rf
+│   │   └── table
+│   ├── metrics
+│   │   ├── test
+│   │   └── train_full
+│   ├── plots
+│   │   ├── data_visualization
+│   │   ├── test
+│   │   │   ├── classi
+│   │   │   │   ├── hw_bin_15SD
+│   │   │   │   │   └── metrics_table
+│   │   │   │   ├── hw_bin_1SD
+│   │   │   │   │   └── metrics_table
+│   │   │   │   └── metrics_plot
+│   │   │   ├── proba_classi
+│   │   │   │   ├── hw_bin_15SD
+│   │   │   │   │   ├── metrics_table
+│   │   │   │   │   ├── PR
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── probability_histogram
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── reliability_curve
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   └── ROC
+│   │   │   │   │       ├── RC
+│   │   │   │   │       └── RFC
+│   │   │   │   ├── hw_bin_1SD
+│   │   │   │   │   ├── metrics_table
+│   │   │   │   │   ├── PR
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── probability_histogram
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── reliability_curve
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   └── ROC
+│   │   │   │   │       ├── RC
+│   │   │   │   │       └── RFC
+│   │   │   │   └── metrics_plot
+│   │   │   └── regr
+│   │   │       ├── cross_correlation
+│   │   │       ├── metrics_plot
+│   │   │       ├── t2m
+│   │   │       │   └── metrics_table
+│   │   │       └── time_series
+│   │   │           ├── all_lead_times
+│   │   │           ├── individual
+│   │   │           └── individual_zoomed_in
+│   │   ├── train_full
+│   │   │   ├── classi
+│   │   │   │   ├── hw_bin_15SD
+│   │   │   │   │   └── metrics_table
+│   │   │   │   └── hw_bin_1SD
+│   │   │   │       └── metrics_table
+│   │   │   ├── proba_classi
+│   │   │   │   ├── hw_bin_15SD
+│   │   │   │   │   ├── features
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── metrics_table
+│   │   │   │   │   ├── PR
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── probability_histogram
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   ├── reliability_curve
+│   │   │   │   │   │   ├── RC
+│   │   │   │   │   │   └── RFC
+│   │   │   │   │   └── ROC
+│   │   │   │   │       ├── RC
+│   │   │   │   │       └── RFC
+│   │   │   │   └── hw_bin_1SD
+│   │   │   │       ├── features
+│   │   │   │       │   ├── RC
+│   │   │   │       │   └── RFC
+│   │   │   │       ├── metrics_table
+│   │   │   │       ├── PR
+│   │   │   │       │   ├── RC
+│   │   │   │       │   └── RFC
+│   │   │   │       ├── probability_histogram
+│   │   │   │       │   ├── RC
+│   │   │   │       │   └── RFC
+│   │   │   │       ├── reliability_curve
+│   │   │   │       │   ├── RC
+│   │   │   │       │   └── RFC
+│   │   │   │       └── ROC
+│   │   │   │           ├── RC
+│   │   │   │           └── RFC
+│   │   │   └── regr
+│   │   │       └── t2m
+│   │   │           ├── features
+│   │   │           │   ├── RFR
+│   │   │           │   └── RR
+│   │   │           └── metrics_table
+│   │   └── vali
+│   │       └── proba_classi
+│   │           ├── hw_bin_15SD
+│   │           │   └── probability_histogram
+│   │           │       ├── RC
+│   │           │       └── RFC
+│   │           └── hw_bin_1SD
+│   │               └── probability_histogram
+│   │                   ├── RC
+│   │                   └── RFC
+│   └── time_series
+│       ├── test
+│       │   ├── hw_bin_15SD
+│       │   ├── hw_bin_1SD
+│       │   └── t2m
+│       └── train_full
+│           ├── hw_bin_15SD
+│           ├── hw_bin_1SD
+│           └── t2m
+├── python_scripts
+│   └── __pycache__
+└── sample_runs
