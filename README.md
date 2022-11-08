@@ -4,6 +4,8 @@
 ### Overview
 A Python code for making AI-based sub-seasonal forecasts of summer heatwaves in central Europe. The machine learning models used are linear and random forest models, both for regression and classification tasks. This code reproduces the data and experiments presented in the pre-print: E. Weirich Benet, M. Pyrina, B. Jiménez Esteve, E. Fraenkel, J. Cohen, and D. I. V. Domeisen: *Sub-seasonal Prediction of Central European Summer Heatwaves with Linear and Random Forest Machine Learning Models*, EarthArXiv, DOI: https://doi.org/10.31223/X5663G [1]
 
+The tree structure of the directories in *hwai/* is shown in *directory_tree.txt*. 
+
 ### Dependencies 
 The code was developed using Python 3.7.10 and several external libraries, which were installed with conda (https://docs.anaconda.com/anaconda/user-guide/tasks/install-packages/): <br/> 
 xarray 0.16.1 <br/> 
