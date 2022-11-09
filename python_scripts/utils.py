@@ -47,6 +47,18 @@ class text_format:
     ## End
     END = '\033[0m'
     
+    
+
+# Set the colormap and centre the colorbar
+class MidpointNormalize(colors.Normalize):
+    
+    def __init__(self, vmin = None, vmax = None, midpoint = None, clip = False):
+        self.midpoint = midpoint
+        colors.Normalize.__init__(self, vmin, vmax, clip)
+    def __call__(self, value, clip = None):
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
+    
 
 # **----------------------------------------------------------------------------------------------------------------------------------------------**
 # Function definitions 
@@ -75,9 +87,15 @@ def traverse(d):
 def interpolate(df, new_index):
     
     """
-    
-    Returns a new DataFrame with all columns values interpolated
-    to the new_index values
+    inputs
+    ------
+    df               pd.DataFrame : original dataframe      
+    new_index                       new index to interpolate df
+
+
+    outputs
+    -------
+    df               pd.DataFrame : new dataframe with values interpolated to new_index  
     
     """
     
@@ -174,6 +192,7 @@ def final_day_of_month(month):
     elif month in [4, 6, 9, 11]: final_day = 30
     # February has 28-29 days
     elif month == 2: final_day = 28
+    
     return final_day
 
 
@@ -246,7 +265,7 @@ def print_model_name(model_name):
     """
     inputs
     ------
-    model_name       str : Machine Learning model
+    model_name       str : Machine Learning model name
 
 
     outputs
@@ -265,7 +284,7 @@ def save_to_file(my_object, path, save_name, file_format):
     """
     inputs
     ------
-    my_object               * : object to save 
+    my_object               * : object to save; must be compatible with the format (e.g., xr.Dataset can be saved to 'nc')
     path                  str : path to directoy
     save_name             str : file name 
     file_format           str : 'nc' (NetCDF file), 'np' (numpy file) or 'csv' (plain text file)
@@ -306,14 +325,14 @@ def compute_ones_percentage(binary_object, object_name, show_position):
     """
       inputs
       -------
-        binary_object           xr.Dataset, xr.DataArray, or np.array : object containing only 0s and 1s
-        object_name                                               str : object name
-        show_position                                            bool : if True, positions of the ones are shown
+      binary_object           xr.Dataset, xr.DataArray, or np.array : object containing only 0s and 1s
+      object_name                                               str : object name
+      show_position                                            bool : if True, positions of the ones are shown
 
 
       outputs
       -------
-        None. Prints a the percentage of one's in the binary object. 
+      None. Prints a the percentage of one's in the binary object. 
 
     """ 
 
@@ -396,7 +415,8 @@ def flip_longitude_360_2_180(var_360, lon):
     -------  
     var_180                        xr.Dataset : variable with longitude coordinates [-180,180]
     
-    This function shifts the longitude dimension form [0,360] to [-180,180]
+    This function shifts the longitude dimension form [0,360] to [-180,180].
+    
     """
     
     var_180 = var_360.assign_coords({'longitude': lon.where(lon <= 180, lon - 360)})
@@ -406,7 +426,7 @@ def flip_longitude_360_2_180(var_360, lon):
 
 
 
-
+# Format ticks
 def format_fn_y(tick_val, tick_pos):
     
     if int(tick_val) in range(N):
@@ -416,7 +436,7 @@ def format_fn_y(tick_val, tick_pos):
 
 
 
-# Hatch non-significant grid cells
+# Hatch non-significant cells
 def hatch_non_significant_cells(ax, p_matrix, target_pos, tau_max):
     
     ## Define significance level
@@ -430,18 +450,6 @@ def hatch_non_significant_cells(ax, p_matrix, target_pos, tau_max):
                   facecolor = 'None', 
                   edgecolor = 'w', cmap = None, 
                   alpha = 0.5)
-
-
-
-# Set the colormap and centre the colorbar
-class MidpointNormalize(colors.Normalize):
-    
-    def __init__(self, vmin = None, vmax = None, midpoint = None, clip = False):
-        self.midpoint = midpoint
-        colors.Normalize.__init__(self, vmin, vmax, clip)
-    def __call__(self, value, clip = None):
-        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
-        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
     
         
     
@@ -484,12 +492,16 @@ def compute_hw_bin_sd(t2m_anom, sd_threshold):
     """
     inputs
     ------
-    t2m_anom                       xr.DataArray or xr.Dataset : time series of detrended 2m air temperature anomalies w.r.t. climatology in CE
+    t2m_anom                       xr.DataArray : time series of detrended 2m air temperature anomalies w.r.t. climatology in CE
+    sd_threshold                          float : threshold for index definition (e.g., 1.5, to mark as heatwaves the entries with 
+                                                  temperature anomalies above 1.5 standard deviations)
 
 
     outputs
     -------   
-    hw_bin_sd                      xr.DataArray or xr.Dataset : binary single measurement (extreme temperature only) weekly heat wave index 
+    hw_bin_sd                      xr.DataArray : binary single measurement (extreme temperature only) weekly heat wave index.
+                                                  0: no heatwave
+                                                  1: heatwave
     
     """  
 
@@ -517,7 +529,7 @@ def compute_hw_bin_sd(t2m_anom, sd_threshold):
 
 
 
-def save_time_series(x, tgn, time_series_type, subset, _lead_time_, outer_split_num_ = None):
+def save_time_series(x, tgn, time_series_type, subset, pred_type_add, _lead_time_, outer_split_num_ = None):
     
     """
     inputs
@@ -526,30 +538,33 @@ def save_time_series(x, tgn, time_series_type, subset, _lead_time_, outer_split_
     tgn                            str : name of target
     time_series_type               str : 'GT', 'persistence', a certain ML forecast etc.
     subset                         str : 'vali', 'train', 'train_full', 'test'
-    _lead_time_                    int : lead time of prediction in weeks
+    pred_type_add                  str : '_proba' if it saves the probabilistic classification forecast, '', otherwise
+    _lead_time_                    int : lead time of prediction in the selected timestep resolution (e.g., '7D')
     " outer_split_num_             int : counter for outer splits "
 
     
     outputs
     -------
-    None                                 Saves the time series x to file
+    None. Saves the time series x to a file.
     
     """    
     
-    # Reminder: for this to work, need to "Restart Kernel and Clear All Outputs" first
-    ## Specify directory
+    # Specify directory
     path = dictionary['path_time_series'] + subset + '/' + tgn + '/'
+    
+    # Specify file name
     if outer_split_num_ != None:
         if time_series_type in ['GT', 'index']:
-            save_name = tgn + '_' + time_series_type + '_' + subset + '_outer_split_' + str(outer_split_num_) + '.npy'
+            save_name = tgn + '_' + time_series_type + '_' + subset + pred_type_add + '_outer_split_' + str(outer_split_num_) + '.npy'
         else:
-            save_name = tgn + '_' + time_series_type + '_' + subset + '_lead_time_' + str(_lead_time_) + '_weeks_outer_split_' + str(outer_split_num_) + '.npy'
+            save_name = tgn + '_' + time_series_type + '_' + subset + pred_type_add + '_lead_time_' + str(_lead_time_) + '_weeks_outer_split_' + str(outer_split_num_) + '.npy'
     else:
         if time_series_type in ['GT', 'index']:
-            save_name = tgn + '_' + time_series_type + '_' + subset + '.npy'
+            save_name = tgn + '_' + time_series_type + '_' + subset + pred_type_add + '.npy'
         else:
-            save_name = tgn + '_' + time_series_type + '_' + subset + '_lead_time_' + str(_lead_time_) + '_weeks.npy'   
-        
+            save_name = tgn + '_' + time_series_type + '_' + subset + pred_type_add + '_lead_time_' + str(_lead_time_) + '_weeks.npy' 
+            
+    # Save    
     save_to_file(x, path, save_name, 'np')
     
 
@@ -562,15 +577,15 @@ def read_old_regr_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
     ------
     tgn                            str : name of target
     _lead_time_                    int : lead time of prediction in weeks
-    " outer_split_num_             int : counter for outer splits. This argument is optional. "
+    " outer_split_num_             int : counter for outer splits (only for no CV case) "
 
     
     outputs
     -------
-    pred_rr                       dict : forecast by RR model for train_full and test
-    " pred_rr_ensemble            dict : ensemble of forecasts for uncertainty estimation by RR model for train_full and test (only for no CV case) "
-    pred_rfr                      dict : forecast by RFR model for train_full and test
-    " pred_rfr_ensemble           dict : ensemble of forecasts for uncertainty estimation by RFR model for train_full and test (only for no CV case) "
+    pred_rr                       dict : regression forecast by RR model for train_full and test
+    " pred_rr_ensemble            dict : ensemble of regression forecasts for uncertainty estimation by RR model for train_full and test (only for no CV case) "
+    pred_rfr                      dict : regression forecast by RFR model for train_full and test
+    " pred_rfr_ensemble           dict : ensemble of regression forecasts for uncertainty estimation by RFR model for train_full and test (only for no CV case) "
     
     """   
     
@@ -617,39 +632,38 @@ def read_old_classi_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
     ------
     tgn                            str : name of target
     _lead_time_                    int : lead time of prediction in weeks
-    " outer_split_num_             int : counter for outer splits. This argument is optional. "
+    " outer_split_num_             int : counter for outer splits (only for no CV case) "
 
     
     outputs
     -------
-    proba_rc_test
-    proba_rfc_test
-    rc_test
-    rfc_test
-    proba_rc_train_full
-    proba_rfc_train_full
-    rc_train_full
-    rfc_train_full
+    pred_rc                       dict : binary classification forecast by RC model for train_full and test
+    " pred_rc_ensemble            dict : ensemble of binary classification forecasts for uncertainty estimation by RC model for train_full and test (only for no CV case) "
+    pred_proba_rc                 dict : probabilistic classification forecast by RC model for train_full and test
+    " pred_proba_rc_ensemble      dict : ensemble of probabilistic classification forecasts for uncertainty estimation by RC model for train_full and test (only for no CV case) "
+    pred_rfc                      dict : binary classification forecast by RFC model for train_full and test
+    " pred_rfc_ensemble           dict : ensemble of binary classification forecasts for uncertainty estimation by RFC model for train_full and test (only for no CV case) "
+    pred_proba_rfc                dict : probabilistic classification forecast by RFC model for train_full and test
+    " pred_proba_rfc_ensemble     dict : ensemble of probabilistic classification forecasts for uncertainty estimation by RFC model for train_full and test (only for no CV case) "
     
     """    
 
     
     # Make combinations of models and subsets
     if dictionary['cv_type'] == 'none': models = ['RC', 'RC_ensemble', 'RFC', 'RFC_ensemble']
-    elif dictionary['cv_type'] == 'nested': models = ['RC', 'RFC', 'RFC_ensemble']
-    pred_type = ['_proba', '']
+    elif dictionary['cv_type'] == 'nested': models = ['RC', 'RFC']
+    pred_types = ['_proba', '']
     subsets = ['test', 'train_full']
-    combinations = list(itertools.product(subsets, pred_type, zip(models, models_sign)))
+    combinations = list(itertools.product(subsets, pred_types, models))
     # Run over all combinations and load numpy files
     d = {}
     for i in range(len(combinations)):
         subset = combinations[i][0]
         pred_type  = combinations[i][1]
-        model = combinations[i][2][0]
-        model_sign = combinations[i][2][1]
+        model = combinations[i][2]
         # Specify directory and file
         path = dictionary['path_time_series'] + subset + '/' + tgn + '/'
-        file = path + tgn + '_' + model_sign + '_' + subset + pred_type + '_lead_time_' + str(_lead_time_) 
+        file = path + tgn + '_' + model + '_' + subset + pred_type + '_lead_time_' + str(_lead_time_) 
         if dictionary['cv_type'] == 'nested': file = file + '_weeks_outer_split_' + str(outer_split_num_) + '.npy'
         elif dictionary['cv_type'] == 'none': file = file + '_weeks.npy'
         # Load

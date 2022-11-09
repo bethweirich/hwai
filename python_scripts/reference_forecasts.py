@@ -34,8 +34,8 @@ def compute_persistence_forecast(data, slice_type, start_date, end_date, target_
     end_date                             str : date when the selected slice ends
     target_name                          str : name of target variable 
     _lead_time_                          int : number of timesteps between each predictor value and the target
-    " mid_end_date                         str : date when the 1st part of the selected slice ends "
-    " mid_start_date                       str : date when the 2nd part of the selected slice starts "
+    " mid_end_date                       str : date when the 1st part of the selected slice ends "
+    " mid_start_date                     str : date when the 2nd part of the selected slice starts "
 
     outputs
     -------
@@ -85,7 +85,7 @@ def compute_persistence_forecast(data, slice_type, start_date, end_date, target_
         else: print('Persistence ', slice_type, ' has (start date, end date): (', persistence_forecast.index[0], ', ', persistence_forecast.index[-1], ')')
     
     # Save persistence forecast time series 
-    save_time_series(persistence_forecast, target_name, 'persistence', slice_type, _lead_time_)
+    save_time_series(persistence_forecast, target_name, 'persistence', slice_type, '', _lead_time_)
         
     return persistence_forecast
 
@@ -138,7 +138,6 @@ def compute_climatology_forecast(y, climatology_doy, tgn):
     return climatology_forecast
 
 
-# In[ ]:
 
 
 def compute_ecmwf_forecast(tgn, _lead_time_, start_date_, end_date_, time_period):
@@ -203,8 +202,8 @@ def compute_ecmwf_forecast(tgn, _lead_time_, start_date_, end_date_, time_period
     ecmwf_forecast = ecmwf_index.to_dataframe()
     
     ### Save ECMWF time series & index
-    save_time_series(ecmwf_forecast, tgn, 'ECMWF', time_period, _lead_time_)
-    save_time_series(ecmwf_forecast.index, tgn, 'ECMWF_index', time_period, _lead_time_)
+    save_time_series(ecmwf_forecast, tgn, 'ECMWF', time_period, '', _lead_time_)
+    save_time_series(ecmwf_forecast.index, tgn, 'ECMWF_index', time_period, '', _lead_time_)
 
     return ecmwf_forecast
 
@@ -276,15 +275,15 @@ def compute_reference_forecasts(data_, dset, start_date, end_date, tg_name, lead
     clim_forecast_['test'] = compute_climatology_forecast(dset['test'][tg_name], clim_doy, tg_name)
     ## Save climatology forecast time series
     for subset in ['train_full', 'test']:
-        save_time_series(clim_forecast_[subset], tg_name, 'climatology', subset, lead_time_)
+        save_time_series(clim_forecast_[subset], tg_name, 'climatology', subset, '', lead_time_)
         if dictionary['verbosity'] > 4: print('Clim forecast', subset, ': ', clim_forecast_[subset])
 
         
     # 3. Dynamical model: ECMWF forecast
-    if dictionary['cv_type'][:6] != 'nested':
+    if dictionary['cv_type'] != 'nested':
         ecmwf_forecast_test = compute_ecmwf_forecast(tg_name, lead_time_, start_date['test'], end_date['test'], 'test')
     else: ecmwf_forecast_test = None
-    # Adapr format
+    # Adapt format
     ecmwf_forecast_ = {'train_full': None, 'test': ecmwf_forecast_test}
     
     

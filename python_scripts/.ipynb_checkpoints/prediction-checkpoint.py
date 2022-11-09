@@ -568,8 +568,8 @@ def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt,
                 plt.close()
         elif dictionary['cv_type'] == 'nested': pred[subset] = rr.predict(X[subset])
         ## Save time series
-        save_time_series(pred[subset], tgn, 'RR', subset, lt, outer_split_num__)
-        if dictionary['cv_type'] == 'none': save_time_series(pred_ensemble[subset], tgn, 'RR_ensemble', subset, lt, outer_split_num__)
+        save_time_series(pred[subset], tgn, 'RR', subset, '', lt, outer_split_num__)
+        if dictionary['cv_type'] == 'none': save_time_series(pred_ensemble[subset], tgn, 'RR_ensemble', subset, '', lt, outer_split_num__)
 
     if dictionary['cv_type'] == 'none': 
         if dictionary['optimize_linear_hyperparam']: return pred, pred_ensemble, best_a
@@ -648,8 +648,8 @@ def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt,
                 plt.close()
         elif dictionary['cv_type'] == 'nested': pred[subset] = rfr.predict(X[subset])
         ## Save time series
-        save_time_series(pred[subset], tgn, 'RFR', subset, lt, outer_split_num__)
-        if dictionary['cv_type'] == 'none': save_time_series(pred_ensemble[subset], tgn, 'RFR_ensemble', subset, lt, outer_split_num__)
+        save_time_series(pred[subset], tgn, 'RFR', subset, '', lt, outer_split_num__)
+        if dictionary['cv_type'] == 'none': save_time_series(pred_ensemble[subset], tgn, 'RFR_ensemble', subset, '', lt, outer_split_num__)
 
     if dictionary['cv_type'] == 'none': 
         if dictionary['optimize_rf_hyperparam']: return pred, pred_ensemble, best_hp
@@ -776,11 +776,11 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, outer_
                 
         ## Save time series
         model_name = 'RC'
-        save_time_series(pred[subset], tgn, model_name, subset, lt, outer_split_num__) 
-        save_time_series(pred_proba[subset], tgn, model_name, subset, lt, outer_split_num__) 
+        save_time_series(pred[subset], tgn, model_name, subset, '', lt, outer_split_num__) 
+        save_time_series(pred_proba[subset], tgn, model_name, subset, '_proba', lt, outer_split_num__) 
         if dictionary['cv_type'] == 'none':
-            save_time_series(pred_ensemble[subset], tgn, model_name + '_ensemble', subset, lt, outer_split_num__) 
-            save_time_series(pred_proba_ensemble[subset], tgn, model_name + '_ensemble', subset, lt, outer_split_num__) 
+            save_time_series(pred_ensemble[subset], tgn, model_name + '_ensemble', subset, '', lt, outer_split_num__) 
+            save_time_series(pred_proba_ensemble[subset], tgn, model_name + '_ensemble', subset, '_proba', lt, outer_split_num__) 
             
         ## Classification plots
         if dictionary['calibrate_linear']: 
@@ -928,11 +928,11 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
                                
         ## Save time series
         model_name = 'RFC'
-        save_time_series(pred[subset], tgn, model_name, subset, lt, outer_split_num__) 
-        save_time_series(pred_proba[subset], tgn, model_name, subset, lt, outer_split_num__) 
+        save_time_series(pred[subset], tgn, model_name, subset, '', lt, outer_split_num__) 
+        save_time_series(pred_proba[subset], tgn, model_name, subset, '_proba', lt, outer_split_num__) 
         if dictionary['cv_type'] == 'none':
-            save_time_series(pred_ensemble[subset], tgn, model_name + '_ensemble', subset, lt, outer_split_num__) 
-            save_time_series(pred_proba_ensemble[subset], tgn, model_name + '_ensemble', subset, lt, outer_split_num__) 
+            save_time_series(pred_ensemble[subset], tgn, model_name + '_ensemble', subset, '', lt, outer_split_num__) 
+            save_time_series(pred_proba_ensemble[subset], tgn, model_name + '_ensemble', subset, '_proba', lt, outer_split_num__) 
             
             
         ## Classification plots
@@ -1245,8 +1245,8 @@ def prepro_part2_and_prediction(tg_name, lead_time_):
     feature_names = list(X['train_full'])
     
     ### Save ground truth time series and index to file
-    save_time_series(y['test'], tg_name, 'GT', 'test', lead_time_)
-    save_time_series(y['test'].index, tg_name, 'index', 'test', lead_time_)    
+    save_time_series(y['test'], tg_name, 'GT', 'test', '', lead_time_)
+    save_time_series(y['test'].index, tg_name, 'index', 'test', '', lead_time_)    
 
     #---------------------------------------------------------------------------------------------------------------------------------------#    
     #---------------------------------------------------------------------------------------------------------------------------------------#  
@@ -1412,8 +1412,8 @@ def prepro_part2_and_prediction_nested_cv(tg_name, lead_time_):
         feature_names = list(X['train_full'])
 
         ### Save ground truth time series and index to file
-        save_time_series(y['test'], tg_name, 'GT', 'test', lead_time_, outer_split_num_ = i)
-        save_time_series(y['test'].index, tg_name, 'index', 'test', lead_time_, outer_split_num_ = i)
+        save_time_series(y['test'], tg_name, 'GT', 'test', '', lead_time_, outer_split_num_ = i)
+        save_time_series(y['test'].index, tg_name, 'index', 'test', '', lead_time_, outer_split_num_ = i)
 
         #---------------------------------------------------------------------------------------------------------------------------------------#    
         #---------------------------------------------------------------------------------------------------------------------------------------#  

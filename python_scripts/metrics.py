@@ -35,6 +35,19 @@ from const import dictionary
 
 def pr_auc_score(y, y_pred):
     
+    """
+    inputs
+    ------
+      y                    array or series : ground truth time series
+      y_pred               array or series : forecast time series 
+
+
+    outputs
+    -------
+      _auc_precision_recall          float : precision-recall area under curve for y_pred forecast
+    
+    """
+    
     np.seterr(divide = 'ignore', invalid = 'ignore')
     _precision, _recall, _thresholds = precision_recall_curve(y_true = y, probas_pred = y_pred)
     # Use AUC function to calculate the area under the curve of precision recall curve
@@ -47,6 +60,19 @@ def pr_auc_score(y, y_pred):
 
 
 def frequency_bias(y, y_pred):
+    
+    """
+    inputs
+    ------
+      y                    array or series : ground truth time series
+      y_pred               array or series : binary classification forecast time series 
+
+
+    outputs
+    -------
+      b                              float : frequency bias for y_pred forecast
+    
+    """
     
     # For a given threshold
     #Confusion matrix
@@ -62,6 +88,20 @@ def frequency_bias(y, y_pred):
 
 def frequency_bias_all_th(y, y_pred):
     
+    """
+    inputs
+    ------
+      y                    array or series : ground truth time series
+      y_pred               array or series : probabilistic classifiaction forecast time series 
+
+
+    outputs
+    -------
+      b                               list : frequency bias for each threshold for y_pred forecast
+      thresholds                      list : probability thresholds used for binarization of the probabilistic classification forecast
+    
+    """
+    
     # For all thresholds
     # calculate base rate
     s = np.sum(y) / len(y)    
@@ -74,6 +114,19 @@ def frequency_bias_all_th(y, y_pred):
 
 
 def extremal_dependence_index(y, y_pred):
+    
+    """
+    inputs
+    ------
+      y                    array or series : ground truth time series
+      y_pred               array or series : binary classification forecast time series 
+
+
+    outputs
+    -------
+      edi                            float : extremal dependence index (EDI) for y_pred forecast
+    
+    """
     
     # Confusion matrix for a given threshold
     conf_mat = confusion_matrix(y, y_pred).astype(float)
@@ -101,6 +154,20 @@ def extremal_dependence_index(y, y_pred):
 
 def threat_score_all_th(y, y_pred_proba, thresholds):
     
+    """
+    inputs
+    ------
+      y                    array or series : ground truth time series
+      y_pred               array or series : probabilistic classifiaction forecast time series 
+      thresholds                      list : probability thresholds used for binarization of the probabilistic classification forecast
+
+
+    outputs
+    -------
+      ts                               list : threat score (TS) for each threshold for y_pred forecast
+    
+    """
+    
     # Initialize
     ts = []
     
@@ -127,13 +194,13 @@ def compute_score(score_name, a, b):
     """
     inputs
     ------
-    score_name                  str : name of score to be computed
-    a                      np.array : true values 
-    b                      np.array : predicted values (values, probabilities or binary)
+      score_name                  str : name of score to be computed
+      a               array or series : true values 
+      b               array or series : predicted values (values, probabilities or binary)
 
     outputs
     -------
-    score                   float : score of a,b
+      score                   float : score of a,b
     
     """
     
@@ -198,28 +265,24 @@ def build_metrics_regr(y, predictions_rr, predictions_rfr,
     inputs
     ------
     y                                         pd.Series : time series of the true target
-    predictions_rr                             np.array : time series of the predicted target (same
-                                                          length and time as y) by the RR model
-    predictions_rfr                            np.array : time series of the predicted target (same
-                                                          length and time as y) by the RFR model
-    persistence                                np.array : time series of the target's persistence (same
-                                                          length and time as y)
-    climatology                                np.array : time series of the target's climatology (same
-                                                          length and time as y)
+    predictions_rr                             np.array : time series of the predicted target by the RR model
+    predictions_rfr                            np.array : time series of the predicted target by the RFR model
+    persistence                                np.array : time series of the target's persistence 
+    climatology                                np.array : time series of the target's climatology 
     target_name                                     str : name of target variable 
-    lead_time                                       int : number of weeks for prediction lead time
-    subset                                          str : 'train' or 'test'
+    lead_time                                       int : prediction lead time
+    subset                                          str : 'train_full' or 'test'
     
-    " predictions_rr_ensemble          dict of np.array : set of time series of the predicted target (same
-                                                          length and time as y) by the RR models trained on each leave-one-out subset "   
-    " predictions_rfr_ensemble         dict of np.array : set of time series of the predicted target (same
-                                                          length and time as y) by each estimator (tree) of the RFR model "
-    " ecmwf                                   np.array  : time series of the predicted target with ECMWF. This argument is optional. "
-    " outer_split_num_                              int : counter for outer splits. This argument is optional. "
+    " predictions_rr_ensemble          dict of np.array : set of time series of the predicted target by the RR models trained on each 
+                                                          bootstrap subset (only for no CV case) "   
+    " predictions_rfr_ensemble         dict of np.array : set of time series of the predicted target by the RFR models trained on each 
+                                                          bootstrap subset (only for no CV case) "
+    " ecmwf                                   np.array  : time series of the predicted target by ECMWF. This argument is optional. "
+    " outer_split_num_                              int : counter for outer splits. This argument is optional (only for no CV case). "
 
     outputs
     -------
-    metrics_dset         xr.Dataset : 2 regression metrics for every forecast
+    metrics_dset                             xr.Dataset : 2 regression metrics for every forecast (Corr, RMSE)
     
     Displays table with 2 different metrics (Corr, RMSE) to evaluate (and compare) the performance 
     of the regression model
@@ -328,32 +391,28 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
     inputs
     ------
     y                                    pd.Series : time series of the true target
-    predictions_rc                        np.array : time series of the predicted target (same
-                                                     length and time as y) with the RC model
-    predictions_rfc                       np.array : time series of the predicted target (same
-                                                     length and time as y) with the RFC model
-    persistence                           np.array : time series of the target's persistence (same
-                                                     length and time as y)
-    climatology                           np.array : time series of the target's climatology (same
-                                                     length and time as y)
+    predictions_rc                        np.array : time series of the predicted target by the RC model
+    predictions_rfc                       np.array : time series of the predicted target by the RFC model
+    persistence                           np.array : time series of the target's persistence 
+    climatology                           np.array : time series of the target's climatology 
     target_name                                str : name of target variable 
-    lead_time                                  int : number of weeks for prediction lead time
-    subset                                     str : 'train' or 'test'
+    lead_time                                  int : prediction lead time
+    subset                                     str : 'train_full' or 'test'
     
-    " predictions_rc_ensemble                 dict : set of time series of the predicted target (same
-                                                     length and time as y) by the RC models trained on each leave-one-out subset "    
-    " predictions_rfc_ensemble                dict : set of time series of the predicted target (same
-                                                     length and time as y) by each estimator (tree) of the RFC model "                                               
-    " ecmwf                               np.array : time series of the predicted target with ECMWF. This argument is optional. "
-    " outer_split_num_                         int : counter for outer splits. This argument is optional. "
+    " predictions_rc_ensemble                 dict : set of time series of the predicted target by the RC models trained on each 
+                                                     bootstrap subset (only for no CV case) "    
+    " predictions_rfc_ensemble                dict : set of time series of the predicted target by the RFC models trained on each 
+                                                     bootstrap subset (only for no CV case) "                                         
+    " ecmwf                               np.array : time series of the predicted target by ECMWF. This argument is optional. "
+    " outer_split_num_                         int : counter for outer splits. This argument is optional (only for no CV case). "
     
 
     outputs
     -------
     metrics_dset                        xr.Dataset : 8 binary classification metrics for every forecast
     
-    Displays table with 8 different metrics (B, EDI, TPR, FPR, Conf:(TN, FN, TP, FP)) 
-    to evaluate (and compare) the performance of the classification model
+    Displays table with 8 different metrics (B, EDI, TPR, FPR, Conf:(TN, FN, TP, FP)) to evaluate (and compare) the performance of the classification 
+    model
         B : frequency bias
         EDI : Extremal Dependence Index
         TPR : True Positive Rate
@@ -496,25 +555,25 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
     inputs
     ------
     y                                    pd.Series : time series of the true target
-    predictions_proba_rc                  np.array : time series of the predicted target with the RC model
-    predictions_proba_rfc                 np.array : time series of the predicted target with the RFC model
-    persistence                          np.array  : time series of the target's persistence 
-    climatology                          np.array  : time series of the target's climatology 
+    predictions_proba_rc                  np.array : time series of the predicted target by the RC model
+    predictions_proba_rfc                 np.array : time series of the predicted target by the RFC model
+    persistence                           np.array : time series of the target's persistence 
+    climatology                           np.array : time series of the target's climatology 
     target_name                                str : name of target variable 
-    lead_time                                  int : number of weeks for prediction lead time
-    subset                                     str : 'train' or 'test'
+    lead_time                                  int : prediction lead time
+    subset                                     str : 'train_full' or 'test'
 
-    " predictions_proba_rc_ensemble           dict : set of time series of the predicted target (same
-                                                     length and time as y) by the RC models trained on each leave-one-out subset "
-    " predictions_proba_rfc_ensemble          dict : set of time series of the predicted target (same
-                                                     length and time as y) by each estimator (tree) of the RFC model "
-    " ecmwf                              np.array  : time series of the predicted target with ECMWF. This argument is optional. "
-    " outer_split_num_                         int : counter for outer splits. This argument is optional. "
+    " predictions_proba_rc_ensemble           dict : set of time series of the predicted target by the RC models trained on each 
+                                                     bootstrap subset (only for no CV case) "
+    " predictions_proba_rfc_ensemble          dict : set of time series of the predicted target by the RFC models trained on each 
+                                                     bootstrap subset (only for no CV case) "
+    " ecmwf                              np.array  : time series of the predicted target by ECMWF. This argument is optional. "
+    " outer_split_num_                         int : counter for outer splits. This argument is optional (only for no CV case). "
                                                      
 
     outputs
     -------
-    metrics_dset                        xr.Dataset : 1 classification probability metric for every forecast
+    metrics_dset                        xr.Dataset : 2 probabilistic classification metrics for every forecast (ROC AUC and BS)
 
     
     Displays table with 2 metrics (ROC AUC and BS) to evaluate (and compare) the performance 
@@ -620,12 +679,12 @@ def save_metrics(metrics, prediction_type, subset, target_name, lead_time, outer
     """
     inputs
     ------
-    metrics            xr.Dataset : several metrics for each forecast
-    prediction_type           str : 'regr', 'classi' or 'proba_classi'
-    subset                    str : 'train' or 'test'
-    target_name               str : name of target variable 
-    lead_time                 int : Lead time of prediction
-    " outer_split_num_          int : counter for outer splits "
+    metrics                         xr.Dataset : several metrics for each forecast
+    prediction_type                        str : 'regr', 'classi' or 'proba_classi'
+    subset                                 str : 'train_full' or 'test'
+    target_name                            str : name of target variable 
+    lead_time                              int : Lead time of prediction
+    " outer_split_num_                     int : counter for outer splits (only for no CV case) "
 
     outputs
     -------
@@ -649,27 +708,28 @@ def construct_metrics_dset(tgn, pred_type, subset):
     ------
     tgn                              str : name of target variable 
     pred_type                        str : 'regr', 'classi' or 'proba_classi'
-    subset                           str : 'train' or 'test'
+    subset                           str : 'train_full' or 'test'
 
 
     outputs
     -------
-    metrics                    xr.Dataset: dataset of metrics data with dimensions (forecast x metric x lead_time) (in the case of nested CV it is the avg over all outer splits)
+    metrics                    xr.Dataset: dataset of metrics data with dimensions (forecast x metric x lead_time) 
+                                           (in the case of nested CV it is the avg over all outer splits)
     
     """
     
-    ## Read metrics data to combined dataset   
+    # Read metrics data to combined dataset   
     path = dictionary['path_metrics'] + subset + '/'
     metrics = []
     for lead_time in dictionary['lead_times']:
         metrics_lt = []
-        # Nested CV
+        ## Nested CV
         if dictionary['cv_type'] == 'nested':
             for outer_split in np.arange(1, dictionary['num_outer_folds'] + 1):    
                 file_name = path + subset + '_metrics_' + pred_type + '_' + tgn + '_lead_time_' + str(lead_time) + '_outer_split_' + str(outer_split) + '.nc'
                 metrics_lt.append(xr.open_dataset(file_name).assign_coords(outer_split = outer_split).expand_dims('outer_split'))   
             metrics_dset = xr.concat(metrics_lt, dim = 'outer_split')
-        # Not nested CV
+        ## Not nested CV
         if dictionary['cv_type'] == 'none':
             file_name = path + subset + '_metrics_' + pred_type + '_' + tgn + '_lead_time_' + str(lead_time) + '.nc'
             metrics_dset = xr.open_dataset(file_name)

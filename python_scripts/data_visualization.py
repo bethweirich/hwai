@@ -33,13 +33,14 @@ def lagged_correlations(predictors, target):
     """
       inputs
       -------
-        predictors                      xr.Dataset 
-        target                          xr.DataArray
+        predictors                      xr.Dataset : preprocessed predictor time series
+        target                        xr.DataArray : preprocessed 2m-temperature time series
 
 
       outputs
       -------
-        None. Plots heatmap representing the lagged correlation of each predictor with the target. Hatched cells correspond to non-significant correlations at 5% significance level.
+        None. Plots heatmap representing the lagged linear correlation of each predictor with the target. 
+        Hatched cells correspond to non-significant correlations at 5% significance level.
 
     """ 
     

@@ -33,7 +33,7 @@ end_year = int(splits.sel(slice_type = 'test', edge = 'end'))
 ### Cross-validation ('none', 'nested')
 ### 'none' has no loops but uses the train_full-test-train-vali partitions manually specified above instead
 ### 'nested' has an inner (train-validation) and an outer loop (train_full-test)
-cv_type = 'none'
+cv_type = 'nested'
 ### Folds in outer and inner loop (only valid for nested CV)
 if cv_type == 'none': num_outer_folds = None; num_inner_folds = None
 elif cv_type == 'nested': num_outer_folds = 5; num_inner_folds = 2
@@ -60,16 +60,16 @@ calibrate_linear = False
 calibrate_rf = True
 
 ### Full run (True) or fast run (False; makes 2-member ensemble for the ML models and for choosing the probability threshold, faster but WRONG)
-full_run = True
+full_run = False
 ### Do you want to run preprocessing part 2 again (True) or use the metrics saved in the last run for plotting only (False)?
 prepro2 = True
 ### Do you want to train the ML models and predict the test set again (True) or read the ML model's forecasts of the test set from the last run (False)?
-train_models = True
+train_models = False
 
 ### Do you want to optimize the hyperparameters for the linear models (True) or use default hyperparameters (False)? 
 optimize_linear_hyperparam = True
 ### Do you want to optimize hyperparameters for the RF models (True) or use the set of best hyperparameters saved in the last run (False)? 
-optimize_rf_hyperparam = True
+optimize_rf_hyperparam = False
 ### Search type ('rdm', 'exhaustive') - only valid if optimize_rf_hyperparam is True 
 ### 'exhaustive' explores all possible hyperparameter combinations in the grid
 ### 'rdm' explores a only a subset of the possible hyperparameter combinations

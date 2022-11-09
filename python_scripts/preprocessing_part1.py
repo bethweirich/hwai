@@ -30,8 +30,8 @@ def import_data():
     outputs
     -------
     t2m                     xr.DataArray : lat-lon grid x time series of 2m air temperature
-    z                       xr.DataArray : lat-lon grid x time series of Geopotential at 500hPa  
-    sm                      xr.Dataset   : 4 vertical levels x lat-lon grid x time series of Soil Water Volume Level
+    z                       xr.DataArray : lat-lon grid x time series of Geopotential at selected vertical level (geopotential_level)
+    sm                        xr.Dataset : 4 vertical levels x lat-lon grid x time series of Soil Water Volume Level
     sst                     xr.DataArray : lat-lon grid x time series of Sea Surface Temperature
     rain                    xr.DataArray : lat-lon grid x time series of total precipitation    
     
@@ -98,7 +98,7 @@ def compute_anomalies_wrt_climatology(dset):
 
     outputs
     -------   
-    dset_anom            xr.Dataset : anomalies w.r.t. climatology, smoothed out in time via a rolling mean
+    dset_anom            xr.Dataset : anomalies w.r.t. a climatology which is smoothed out in time via a 31-day rolling mean
                                       
     
     """ 
@@ -121,7 +121,7 @@ def compute_north_atlantic_pca(z500):
     """
     inputs
     ------    
-    z500                              xr.DataArray : lat-lon grid x time series of Geopotential at 500hPa (1d resolution)     
+    z500                              xr.DataArray : lat-lon grid x time series of Geopotential at 500hPa (daily resolution)     
     
     outputs
     -------
@@ -197,15 +197,15 @@ def box_selection(t2m, z, sm, sst, rain):
     ------
     t2m                      xr.DataArray : lat-lon grid x time series of 2m air temperature (target & predictor)
     z                        xr.DataArray : lat-lon grid x time series of Geopotential at 500hPa (predictor)
-    sm                       xr.Dataset   : 4 vertical levels x lat-lon grid x time series of Soil Water Volume Level (predictor)
+    sm                         xr.Dataset : 4 vertical levels x lat-lon grid x time series of Soil Water Volume Level (predictor)
     sst                      xr.DataArray : lat-lon grid x time series of Sea Surface Temperature (predictor)
     rain                     xr.DataArray : lat-lon grid x time series of total precipitation (predictor)
 
     outputs
     -------
-    t2m_sa_                  xr.DataArray : time series of 2m air temperature in CE (target)   
+    t2m_sa_                  xr.DataArray : time series of 2m air temperature in CE (target & predictor)   
     z_sa_                    xr.DataArray : time series of Geopotential in CE at 500hPa (predictor)
-    sm_all_levels_sa_        xr.Dataset   : 4 vertical levels x time series of Soil Water Volume Level in CE (predictor)
+    sm_all_levels_sa_          xr.Dataset : 4 vertical levels x time series of Soil Water Volume Level in CE (predictor)
     sst_nwmed_sa_            xr.DataArray : time series of Sea Surface Temperature in NWMED (predictor)
     sst_cnaa_sa_             xr.DataArray : time series of Sea Surface Temperature in CNAA (predictor)
     rain_sa_                 xr.DataArray : time series of total precipitation in CE (predictor)   
@@ -280,7 +280,7 @@ def construct_dataset(t2m_sa_, z_sa_, sm_sa_, sea_sa_, sst_nwmed_sa_, sst_cnaa_s
 
     outputs
     -------   
-    dset_sa_                 xr.Dataset : dataset of spatially averaged variables 
+    dset_sa_                   xr.Dataset : dataset of spatially averaged target and predictors 
    
     sa = spatially averaged
     
@@ -363,7 +363,7 @@ def detrend(dset, show_trends):
 
     outputs
     -------   
-    dset                 xr.Dataset : dataset containing variables without long-term linear trend   
+    dset                 xr.Dataset : dataset containing detrended variables (without long-term linear trend)  
     
     """ 
 
@@ -409,7 +409,7 @@ def compute_std_climatology(dset):
 
     outputs
     -------   
-    dset_clim_std        xr.Dataset : standardized daily climatology (1 value for each day of the year x # vars)
+    dset_clim_std        xr.Dataset : standardized daily climatology (1 value for each day of the year x num of vars)
     
     """ 
 
@@ -443,7 +443,7 @@ def compute_climatology(dset):
 
     outputs
     -------   
-    dset_clim_sm         xr.Dataset : daily climatology (1 value for each day of the year x # vars)
+    dset_clim_sm         xr.Dataset : daily climatology (1 value for each day of the year x num of vars)
     
     """ 
 
