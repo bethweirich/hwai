@@ -62,8 +62,10 @@ calibrate_rf = True
 ### Full run (True) or fast run (False; makes 2-member ensemble for the ML models and for choosing the probability threshold, faster but WRONG)
 full_run = True
 ### Do you want to run preprocessing part 2 again (True) or use the metrics saved in the last run for plotting only (False)?
+### prepro2 = False can only be run after a complete run (all lead times) with prepro2 = True 
 prepro2 = True
 ### Do you want to train the ML models and predict the test set again (True) or read the ML model's forecasts of the test set from the last run (False)?
+### train_models = False can only be run after a complete run (all lead times) with train_models = True 
 train_models = True
 
 ### Do you want to optimize the hyperparameters for the linear models (True) or use default hyperparameters (False)? 
