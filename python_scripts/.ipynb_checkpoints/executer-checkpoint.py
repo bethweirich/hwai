@@ -15,9 +15,12 @@ from utils import (print_title,
 ## Metrics
 from metrics import construct_metrics_dset
 ## Plotting
-from plotting import plot_metrics, show_hyperparameters, plot_pred_time_series_all_lead_times
+from plotting import (plot_metrics, 
+                      show_hyperparameters, 
+                      plot_pred_time_series_all_lead_times)
 ## Preprocessing
-from prediction import prepro_part2_and_prediction, prepro_part2_and_prediction_nested_cv
+from prediction import (prepro_part2_and_prediction, 
+                        prepro_part2_and_prediction_nested_cv)
 
 # Import constants
 from const import dictionary
@@ -36,14 +39,14 @@ metrics_tgns = {'proba_classi': [], 'classi': [], 'regr': []}
 # Loop over all targets
 ## REGRESSION
 for _target_name in dictionary['target_names_regr']:
-    if dictionary['verbosity'] > 0: print_title(_target_name)
+    print_title(_target_name)
     # Initialize    
     metrics_tgn = {'proba_classi': [], 'classi': [], 'regr': []}   
     pred_types = ['regr']
     if dictionary['prepro2'] is True:
         # Iterate over the different lead times
         for leadtime in dictionary['lead_times']:
-            if dictionary['verbosity'] > 0: print_lead_time(leadtime)
+            print_lead_time(leadtime)
             # Preprocessing part 2, reference forecasts & prediction   
             if dictionary['cv_type'] == 'none': prepro_part2_and_prediction(_target_name, leadtime)
             elif dictionary['cv_type'] == 'nested': prepro_part2_and_prediction_nested_cv(_target_name, leadtime)
@@ -59,14 +62,14 @@ for _target_name in dictionary['target_names_regr']:
     
 ## CLASSIFICATION    
 for _target_name in dictionary['target_names_classi']:
-    if dictionary['verbosity'] > 0: print_title(_target_name)
+    print_title(_target_name)
     # Initialize    
     metrics_tgn = {'proba_classi': [], 'classi': [], 'regr': []}            
     pred_types = ['proba_classi', 'classi']
     if dictionary['prepro2'] is True: 
         # Iterate over the different lead times
         for leadtime in dictionary['lead_times']:
-            if dictionary['verbosity'] > 0: print_lead_time(leadtime)
+            print_lead_time(leadtime)
             # Preprocessing part 2, reference forecasts & prediction   
             if dictionary['cv_type'] == 'none': prepro_part2_and_prediction(_target_name, leadtime)
             elif dictionary['cv_type'] == 'nested': prepro_part2_and_prediction_nested_cv(_target_name, leadtime) 

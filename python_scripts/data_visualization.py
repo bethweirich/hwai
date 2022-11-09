@@ -14,7 +14,8 @@ from tigramite.independence_tests import ParCorr
 
 # Import own functions
 from preprocessing_part2 import select_season
-from utils import compute_ones_percentage, mask_months
+from utils import (compute_ones_percentage, 
+                   mask_months)
 from plotting import (plot_data_histogram, 
                       plot_lagged_correlation_heatmap, 
                       plot_class_distr, 

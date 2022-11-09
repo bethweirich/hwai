@@ -23,7 +23,8 @@ from scipy.stats import pearsonr
 
 # Import own functions
 ## Utils
-from utils import filter_dates_like, save_to_file
+from utils import (filter_dates_like, 
+                   save_to_file)
 
 # Import constants
 from const import dictionary
@@ -209,7 +210,6 @@ def compute_score(score_name, a, b):
     elif score_name == 'BS': score = brier_score_loss(a,b) # b is proba         
     elif score_name == 'Corr': score = stats.pearsonr(a, b)[0] # b is value
     elif score_name == 'RMSE': score = mean_squared_error(a, b, squared = False) # b is value
-    elif score_name == 'RMSE_Corr': score = stats.pearsonr(a, b)[0] - mean_squared_error(a, b, squared = False)/5 # b is value
         
     return score
 
@@ -270,7 +270,7 @@ def build_metrics_regr(y, predictions_rr, predictions_rfr,
     persistence                                np.array : time series of the target's persistence 
     climatology                                np.array : time series of the target's climatology 
     target_name                                     str : name of target variable 
-    lead_time                                       int : prediction lead time
+    lead_time                                       int : lead time of prediction in units of timestep
     subset                                          str : 'train_full' or 'test'
     
     " predictions_rr_ensemble          dict of np.array : set of time series of the predicted target by the RR models trained on each 
@@ -278,7 +278,7 @@ def build_metrics_regr(y, predictions_rr, predictions_rfr,
     " predictions_rfr_ensemble         dict of np.array : set of time series of the predicted target by the RFR models trained on each 
                                                           bootstrap subset (only for no CV case) "
     " ecmwf                                   np.array  : time series of the predicted target by ECMWF. This argument is optional. "
-    " outer_split_num_                              int : counter for outer splits. This argument is optional (only for no CV case). "
+    " outer_split_num_                              int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
@@ -396,7 +396,7 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
     persistence                           np.array : time series of the target's persistence 
     climatology                           np.array : time series of the target's climatology 
     target_name                                str : name of target variable 
-    lead_time                                  int : prediction lead time
+    lead_time                                  int : lead time of prediction in units of timestep
     subset                                     str : 'train_full' or 'test'
     
     " predictions_rc_ensemble                 dict : set of time series of the predicted target by the RC models trained on each 
@@ -404,7 +404,7 @@ def build_metrics_classi(y, predictions_rc, predictions_rfc,
     " predictions_rfc_ensemble                dict : set of time series of the predicted target by the RFC models trained on each 
                                                      bootstrap subset (only for no CV case) "                                         
     " ecmwf                               np.array : time series of the predicted target by ECMWF. This argument is optional. "
-    " outer_split_num_                         int : counter for outer splits. This argument is optional (only for no CV case). "
+    " outer_split_num_                         int : counter for outer splits (only for nested CV case) "
     
 
     outputs
@@ -560,7 +560,7 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
     persistence                           np.array : time series of the target's persistence 
     climatology                           np.array : time series of the target's climatology 
     target_name                                str : name of target variable 
-    lead_time                                  int : prediction lead time
+    lead_time                                  int : lead time of prediction in units of timestep
     subset                                     str : 'train_full' or 'test'
 
     " predictions_proba_rc_ensemble           dict : set of time series of the predicted target by the RC models trained on each 
@@ -568,7 +568,7 @@ def build_metrics_proba_classi(y, predictions_proba_rc, predictions_proba_rfc,
     " predictions_proba_rfc_ensemble          dict : set of time series of the predicted target by the RFC models trained on each 
                                                      bootstrap subset (only for no CV case) "
     " ecmwf                              np.array  : time series of the predicted target by ECMWF. This argument is optional. "
-    " outer_split_num_                         int : counter for outer splits. This argument is optional (only for no CV case). "
+    " outer_split_num_                         int : counter for outer splits (only for nested CV case) "
                                                      
 
     outputs
@@ -683,8 +683,8 @@ def save_metrics(metrics, prediction_type, subset, target_name, lead_time, outer
     prediction_type                        str : 'regr', 'classi' or 'proba_classi'
     subset                                 str : 'train_full' or 'test'
     target_name                            str : name of target variable 
-    lead_time                              int : Lead time of prediction
-    " outer_split_num_                     int : counter for outer splits (only for no CV case) "
+    lead_time                              int : lead time of prediction in units of timestep
+    " outer_split_num_                     int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------

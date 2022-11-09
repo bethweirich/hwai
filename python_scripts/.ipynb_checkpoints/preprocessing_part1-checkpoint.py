@@ -10,8 +10,13 @@ import numpy as np
 from scipy import signal
 
 # Import own functions
-from utils import save_to_file, flip_longitude_360_2_180, month_to_season, standardize_data, compute_hw_bin_sd
-from plotting import show_snao_sea_patterns, show_first_x_eofs
+from utils import (save_to_file, 
+                   flip_longitude_360_2_180, 
+                   month_to_season, 
+                   standardize_data, 
+                   compute_hw_bin_sd)
+from plotting import (show_snao_sea_patterns, 
+                      show_first_x_eofs)
 
 # Import constants
 from const import dictionary

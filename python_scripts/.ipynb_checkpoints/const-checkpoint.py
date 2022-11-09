@@ -33,7 +33,7 @@ end_year = int(splits.sel(slice_type = 'test', edge = 'end'))
 ### Cross-validation ('none', 'nested')
 ### 'none' has no loops but uses the train_full-test-train-vali partitions manually specified above instead
 ### 'nested' has an inner (train-validation) and an outer loop (train_full-test)
-cv_type = 'nested'
+cv_type = 'none'
 ### Folds in outer and inner loop (only valid for nested CV)
 if cv_type == 'none': num_outer_folds = None; num_inner_folds = None
 elif cv_type == 'nested': num_outer_folds = 5; num_inner_folds = 2
@@ -55,20 +55,24 @@ geopotential_level = '500.'
 
 
 ## 1.4. Actions
-### Calibrate classification models via Platt scaling (True)?
+### Calibrate probabilistic classification forecast via Platt scaling (True) or use uncalibrated forecast (False)?
 calibrate_linear = False
 calibrate_rf = True
 
 ### Full run (True) or fast run (False; makes 2-member ensemble for the ML models and for choosing the probability threshold, faster but WRONG)
-full_run = False
+full_run = True
 ### Do you want to run preprocessing part 2 again (True) or use the metrics saved in the last run for plotting only (False)?
 prepro2 = True
 ### Do you want to train the ML models and predict the test set again (True) or read the ML model's forecasts of the test set from the last run (False)?
-train_models = False
+train_models = True
 
 ### Do you want to optimize the hyperparameters for the linear models (True) or use default hyperparameters (False)? 
+### The linear model hyper-parameter optimization is fast to run (on the order of <1min per model)
 optimize_linear_hyperparam = True
 ### Do you want to optimize hyperparameters for the RF models (True) or use the set of best hyperparameters saved in the last run (False)? 
+### The hyper-parameters provided on GitHub are optimized through exhaustive grid search (Table C1 in [1])
+### If executer.py is run with optimize_rf_hyperparam = True, these hyper-parameters will be overwritten. The exhaustive RF hyper-parameter optimization 
+### might run for several hours on your server.
 optimize_rf_hyperparam = False
 ### Search type ('rdm', 'exhaustive') - only valid if optimize_rf_hyperparam is True 
 ### 'exhaustive' explores all possible hyperparameter combinations in the grid
@@ -78,7 +82,7 @@ hp_search_type = 'rdm'
 num_hp_set_candidates = 2
 
 ### Metrics to optimize 
-#### Regression ('RMSE', 'Corr', 'RMSE_Corr')
+#### Regression ('RMSE', 'Corr')
 metric_regr = 'RMSE'
 #### Classification ('ROC AUC', 'BS')
 metric_classi = 'BS'
@@ -86,7 +90,7 @@ metric_classi = 'BS'
 metric_th_sel = 'B'
 
 ### Should the figures show and be saved with a title?
-plot_fig_title = False
+plot_fig_title = True
 
 
 ## 1.5. Verbosity level

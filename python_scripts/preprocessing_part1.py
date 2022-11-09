@@ -10,8 +10,13 @@ import numpy as np
 from scipy import signal
 
 # Import own functions
-from utils import save_to_file, flip_longitude_360_2_180, month_to_season, standardize_data, compute_hw_bin_sd
-from plotting import show_snao_sea_patterns, show_first_x_eofs
+from utils import (save_to_file, 
+                   flip_longitude_360_2_180, 
+                   month_to_season, 
+                   standardize_data, 
+                   compute_hw_bin_sd)
+from plotting import (show_snao_sea_patterns, 
+                      show_first_x_eofs)
 
 # Import constants
 from const import dictionary
@@ -52,27 +57,6 @@ def import_data():
                                 dictionary['path_raw_data'] + 'rain_eobs.nc',
                                 dictionary['path_raw_data'] + 't2m_eobs.nc'
                             )
-    
-    
-    ## Only for CFC S2S users
-    #path_eraint = '/s2s/shared_data/Datasets/ERA-Int/'
-    #path_era5_land = '/s2s/weiriche/heat_waves/reanalysis/ERA5-Land/'
-    #path_hadisst = '/s2s/shared_data/Datasets/HadISST/'
-    #path_bernatj_data = '/home/bernatj/data/'
-    #path_eobs = '/s2s/shared_data/Datasets/E-OBS/'
-    #
-    #(access_z_eraint_file, 
-    # access_sm_era5land_file, 
-    # access_sst_hadisst_file, 
-    # access_rain_eobs_file, 
-    # access_t2m_eobs_file) = (
-    #                            path_eraint + 'phi/daymean/phi-eraint-37plevels-daymean-*',
-    #                            path_era5_land + 'sm/VSW_l1-4_1981-2019-daily.nc',
-    #                            path_hadisst + 'HadISST_monmean_1870-2019.nc',
-    #                            path_eobs + 'precip/daymean/rr_ens_mean_0.25deg_reg_v22.0e.nc',
-    #                            path_eobs + 't2m_mean/daymean/tg_ens_mean_0.25deg_reg_v22.0e.nc'
-    #                            )
-    
 
     # Load data and select vertical level for geopotential
     ## Target

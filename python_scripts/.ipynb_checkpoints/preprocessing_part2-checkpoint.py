@@ -153,7 +153,7 @@ def split_sets(data, slice_type, lead_time):
         data           pd.Dataframe or xr.Dataset : time series for overall period  and all features
         slice_type                            str : select whether you want the train (works only if giving train_full), vali (works only if giving train_full),
                                                     train_full (works only if giving full dataset) or test data (works only if giving full dataset)
-        lead_time                             int : lead time for prediction
+        lead_time                             int : lead time of prediction in units of timestep
 
       outputs
       -------
@@ -228,7 +228,7 @@ def split_sets_nested_cv(df, set1_ix, set2_ix, split_type, lead_time):
         set1_ix                              list : range of int indices created via kFold.split that characterise set1
         set2_ix                              list : range of int indices created via kFold.split that characterise set2
         split_type                            str : 'inner' or 'outer' -> refers to which loop of the nested CV is considered 
-        lead_time                             int : lead time for prediction
+        lead_time                             int : lead time of prediction in units of timestep
 
       outputs
       -------
@@ -329,7 +329,7 @@ def lagged_features(data, target_name, lead_time):
       -------
         data         xarray.Dataset : time series from all variables (non-lagged)
         target_name             str : name of target variable 
-        lead_time               int : lead time for prediction
+        lead_time               int : lead time of prediction in units of timestep
 
       outputs
       -------

@@ -247,7 +247,7 @@ def print_lead_time(lead_time):
     """
     inputs
     ------
-    lead_time       int : lead time of the prediction
+    lead_time       int : lead time of prediction in units of timestep
 
 
     outputs
@@ -265,7 +265,7 @@ def print_model_name(model_name):
     """
     inputs
     ------
-    model_name       str : Machine Learning model name
+    model_name       str : machine Learning model name
 
 
     outputs
@@ -539,8 +539,8 @@ def save_time_series(x, tgn, time_series_type, subset, pred_type_add, _lead_time
     time_series_type               str : 'GT', 'persistence', a certain ML forecast etc.
     subset                         str : 'vali', 'train', 'train_full', 'test'
     pred_type_add                  str : '_proba' if it saves the probabilistic classification forecast, '', otherwise
-    _lead_time_                    int : lead time of prediction in the selected timestep resolution (e.g., '7D')
-    " outer_split_num_             int : counter for outer splits "
+    _lead_time_                    int : lead time of prediction in units of timestep
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
 
     
     outputs
@@ -576,8 +576,8 @@ def read_old_regr_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
     inputs
     ------
     tgn                            str : name of target
-    _lead_time_                    int : lead time of prediction in weeks
-    " outer_split_num_             int : counter for outer splits (only for no CV case) "
+    _lead_time_                    int : lead time of prediction in units of timestep
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
 
     
     outputs
@@ -631,8 +631,8 @@ def read_old_classi_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
     inputs
     ------
     tgn                            str : name of target
-    _lead_time_                    int : lead time of prediction in weeks
-    " outer_split_num_             int : counter for outer splits (only for no CV case) "
+    _lead_time_                    int : lead time of prediction in units of timestep
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
 
     
     outputs
@@ -682,8 +682,9 @@ def read_old_classi_ml_forecasts(tgn, _lead_time_, outer_split_num_ = None):
         pred_rfc_ensemble = {'train_full': d['rfc_ensemble_train_full'], 'test': d['rfc_ensemble_test']}  
         pred_proba_rfc_ensemble = {'train_full': d['rfc_ensemble_train_full_proba'], 'test': d['rfc_ensemble_test_proba']}
     
+
     if dictionary['cv_type'] == 'none': return pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble, pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble
-    elif dictionary['cv_type'] == 'nested': pred_rc, {'train_full': None, 'test': None}, pred_proba_rc, {'train_full': None, 'test': None}, pred_rfc, {'train_full': None, 'test': None}, pred_proba_rfc, {'train_full': None, 'test': None}
+    elif dictionary['cv_type'] == 'nested': return pred_rc, {'train_full': None, 'test': None}, pred_proba_rc, {'train_full': None, 'test': None}, pred_rfc, {'train_full': None, 'test': None}, pred_proba_rfc, {'train_full': None, 'test': None}
 
 
 

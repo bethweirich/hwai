@@ -16,37 +16,39 @@ import time
 ## Models
 import sklearn
 from sklearn.utils.extmath import softmax
-from sklearn.linear_model import LinearRegression, Ridge, RidgeClassifier
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.linear_model import (LinearRegression, 
+                                  Ridge, 
+                                  RidgeClassifier)
+from sklearn.ensemble import (RandomForestRegressor, 
+                              RandomForestClassifier)
 from sklearn.model_selection import KFold
 from sklearn.calibration import CalibratedClassifierCV 
 
 # Import own functions
 ## Utils
 from utils import (save_to_file, 
-                     print_model_name, 
-                     save_time_series, 
-                     traverse, 
-                     interpolate, 
-                     read_old_regr_ml_forecasts,
-                     read_old_classi_ml_forecasts)                                 
+                   print_model_name, 
+                   save_time_series, 
+                   traverse, 
+                   interpolate, 
+                   read_old_regr_ml_forecasts,
+                   read_old_classi_ml_forecasts)                                 
 ## Plotting
 from plotting import (show_coeffs, 
-                        show_rf_imp, 
-                        classification_plots,
-                        plot_proba_histogram,
-                        plot_pred_time_series,
-                        plot_zoomed_in_pred_time_series,
-                        plot_cross_corr)
-
+                      show_rf_imp, 
+                      classification_plots,
+                      plot_proba_histogram,
+                      plot_pred_time_series,
+                      plot_zoomed_in_pred_time_series,
+                      plot_cross_corr)
 ## Metrics
 from metrics import (compute_score,
-                       frequency_bias_all_th,
-                       threat_score_all_th,
-                       build_metrics_regr,
-                       build_metrics_classi,
-                       build_metrics_proba_classi,
-                       save_metrics)
+                     frequency_bias_all_th,
+                     threat_score_all_th,
+                     build_metrics_regr,
+                     build_metrics_classi,
+                     build_metrics_proba_classi,
+                     save_metrics)
 ## Reference forecasts
 from reference_forecasts import compute_reference_forecasts
 ## Preprocessing 2
@@ -60,18 +62,20 @@ from preprocessing_part2 import (lagged_features,
 # Import constants
 from const import dictionary
 
-
 # **----------------------------------------------------------------------------------------------------------------------------------------------**
+# Class definitions 
 
-# Function definitions 
-
+# Ridge classifier which can make a probabilistic classification forecast
 class RidgeClassifierwithProba(RidgeClassifier):
     def predict_proba(self, X):
         d = self.decision_function(X)
         d_2d = np.c_[-d, d]
         return softmax(d_2d)
+    
+    
+# **----------------------------------------------------------------------------------------------------------------------------------------------**
 
-
+# Function definitions 
 
 def binarize(proba, threshold):
     
@@ -79,12 +83,12 @@ def binarize(proba, threshold):
     inputs
     ------
     proba                           pd.Series : probabilities of belonging to class 1 
-    threshold                           float : threshold that marks the probability above which we define class 1
+    threshold                           float : probability threshold that marks the probability above which we define class 1
 
 
     outputs
     -------
-    binary                          pd.Series : binary classification prediction
+    binary                          pd.Series : binary classification forecast
      
     """
     
@@ -103,16 +107,16 @@ def predict_classi(model1, model2, X, th):
     inputs
     ------
     model1                         function : trained ML model
-    model2                         function : trained and calibrated ML model (only for calibration = True, otherwise, equal to model)
-    X                          pd.Dataframe : matrix of attributes (time x lagged features)
-    th                                float : threshold to binarize probability output      
+    model2                         function : trained and calibrated ML model (only for calibration is True, otherwise, equal to model)
+    X                          pd.Dataframe : matrix of lagged predictors in the time period we want to forecast (time x lagged features)
+    th                                float : probability threshold to binarize probabilistic output      
 
 
     outputs
     -------
     pred                          pd.Series : binary classification prediction by model1
-    pred_proba                    pd.Series : probabilities of belonging to the class 1 (being a HW) by model2
-    pred_proba_4bin               pd.Series : probabilities of belonging to the class 1 (being a HW) by model1
+    pred_proba                    pd.Series : probabilities of belonging to the class 1 (being a HW) by model2 (calibrated if calibration is True)
+    pred_proba_4bin               pd.Series : probabilities of belonging to the class 1 (being a HW) by model1 (non-calibrated)
      
     """
     
@@ -133,17 +137,18 @@ def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _lead_time
     """
     inputs
     ------
-    model                    function : ML model (not trained)
-    model_name                    str : 'RC' or 'RFC'
-    X              dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y            dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
-    tgn_                          str : target name
-    _lead_time_                   int : lead time for prediction
-    " outer_split_num__           int : counter for outer splits "
+    model                           function : ML model (not trained)
+    model_name                           str : 'RC' or 'RFC'
+    X                     dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                   dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    tgn_                                 str : target name
+    _lead_time_                          int : lead time of prediction in units of timestep
+    " outer_split_num__                  int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
-    best_threshold              float : probability threshold that either sets B=1 or maximizes TS
+    best_threshold                     float : probability threshold that either sets B=1 or maximizes TS (user-defined setting under metric_th_sel
+                                               in const.py)
     
     """
 
@@ -164,6 +169,7 @@ def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _lead_time
     pred_proba = {}
     b = {}
     ts = {}
+    
     # Loop over all 30 train/vali splits
     for key in X_train:  
         # Fit again with train period for further hyperparameter optimization step
@@ -200,9 +206,17 @@ def choose_best_proba_threshold_classi(model, model_name, X, y, tgn_, _lead_time
     if dictionary['verbosity'] > 3:
         for key in X_vali:  
             print('>> For ', key)
-            plot_proba_histogram(pred_proba[key], 'vali', tgn_, model_name, _lead_time_, best_threshold = best_threshold, outer_split_num_ = outer_split_num__, inner_split_num_ = None)
+            plot_proba_histogram(pred_proba[key], 
+                                 'vali', 
+                                 tgn_, 
+                                 model_name, 
+                                 _lead_time_, 
+                                 best_threshold = best_threshold, 
+                                 outer_split_num_ = outer_split_num__, 
+                                 inner_split_num_ = None)
 
-    if dictionary['verbosity'] > 1: print('Best Threshold = %f with (mean) frequency bias = %f and threat score = %f' %(best_threshold, b_mean[best_th_ix], ts_mean[best_th_ix]))  
+    if dictionary['verbosity'] > 1: 
+        print('Best Threshold = %f with (mean) frequency bias = %f and threat score = %f' %(best_threshold, b_mean[best_th_ix], ts_mean[best_th_ix]))  
 
     return best_threshold
 
@@ -214,18 +228,20 @@ def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_t
     inputs
     ------
     
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV, plus), vali, and test time periods
-    optimize_metric_                    str : metric to optimize: Regression ('Corr', 'RMSE'), Classification ('ROC AUC', 'PR AUC', 'BS')
+    X                    dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                  dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    optimize_metric_                    str : metric to optimize: Regression ('Corr' or 'RMSE'), Classification ('ROC AUC', 'PR AUC', or 'BS')
     tgn_                                str : name of target variable
-    _lead_time_                         int : lead time of prediction in weeks
-    " outer_split_num___                int : counter for outer splits "
+    _lead_time_                         int : lead time of prediction in units of timestep 
+    " outer_split_num___                int : counter for outer splits (only for nested CV case) "
     
 
     outputs
     -------
-    best_rf                        function : random forest random forest model initialized with the best hyperparameters (not trained)
-    best_hyperparameters_dset_   xr.Dataset : hyperparameter set that optimizes optimize_metric_ when doing CV on train_full
+    best_rf                        function : random forest model initialized with the best hyperparameters (not trained)
+    best_hyperparameters_dset_   xr.Dataset : hyperparameter set that optimizes optimize_metric_ when a single non-calibrated RF is trained on 
+                                              the training set and forecasts the validation set. For nested CV, two training and validation sets
+                                              are used for each outer split and the score is averaged. 
     
     """
     
@@ -240,7 +256,7 @@ def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_t
     # Initialize
     ## Random state
     seed = 7
-    ## score_max with its minumum
+    ## score_max with its minumum (high for loss metrics, low for all other metrics)
     if optimize_metric_ in ['RMSE', 'BS']: score_max = 1000.
     else: score_max = 0.
     
@@ -251,7 +267,9 @@ def optimize_random_forest_hyperparameters(X, y, optimize_metric_, tgn_, _lead_t
     first_guess_min_samples_leaf = int(len(X['train_full'])/100)
     step_min_samples_leaf = int(first_guess_min_samples_leaf/5)
     if step_min_samples_leaf < 1: step_min_samples_leaf = 1
-    min_samples_leaf = np.arange(first_guess_min_samples_leaf - 5*step_min_samples_leaf, first_guess_min_samples_leaf + 10*step_min_samples_leaf, step_min_samples_leaf)
+    min_samples_leaf = np.arange(first_guess_min_samples_leaf - 5*step_min_samples_leaf, 
+                                 first_guess_min_samples_leaf + 10*step_min_samples_leaf, 
+                                 step_min_samples_leaf)
     ### Remove entries smaller than 1
     min_samples_leaf = min_samples_leaf[min_samples_leaf >= 1]
     ## Maximum number of levels in tree
@@ -378,12 +396,13 @@ def quick_choose_random_forest_hyperparameters(tgn_, _lead_time_, outer_split_nu
     inputs
     ------
     tgn_                          str : name of target variable
-    _lead_time_                   int : lead time of prediction in weeks
-    " outer_split_num_            int : counter of outer split for nested CV "
+    _lead_time_                   int : lead time of prediction in units of timestep
+    " outer_split_num_            int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
-    rf_                      function : random forest model initialized with the best hyperparameters (not trained)
+    rf_                      function : random forest model initialized with the best hyperparameters saved the last time that optimize_rf_hyperparam 
+                                        was True (not trained)
     
     """
     
@@ -409,7 +428,8 @@ def quick_choose_random_forest_hyperparameters(tgn_, _lead_time_, outer_split_nu
     min_samples_leaf_ = int(hyperparam_dset.sel(best_hyperparameter = 'best_min_samples_leaf').value)
     min_samples_split_ = 2 * min_samples_leaf_
     ## Print hyperparameters
-    if dictionary['verbosity'] > 1: print('(n_estimators, max_depth, min_samples_split, min_samples_leaf) : (', n_estimators_, ', ', max_depth_, ', ', min_samples_split_, ', ', min_samples_leaf_, ')')        
+    if dictionary['verbosity'] > 1: 
+        print('(n_estimators, max_depth, min_samples_split, min_samples_leaf) : (', n_estimators_, ', ', max_depth_, ', ', min_samples_split_, ', ', min_samples_leaf_, ')')        
     
     # Initialize & train model
     ## Initialize with best hyperparameters
@@ -444,14 +464,17 @@ def optimize_ridge_hyperparameters(X, y, tgn_):
     """
     inputs
     ------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
+    X                    dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                  dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
     tgn_                                str : name of target variable
 
     outputs
     -------
     best_model                     function : Ridge Regression model initialized with the best hyperparameters (not trained)
-    best_alpha                        float : best regularization coefficient
+    best_alpha                        float : best regularization coefficient (alpha). Determines the amount of shrinkage of the 
+                                              regression coefficients:
+                                              1:maximum regularization
+                                              0:no regularization
     
     """
     
@@ -510,30 +533,31 @@ def optimize_ridge_hyperparameters(X, y, tgn_):
 
 
 
-def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt, 
-                                      outer_split_num__ = None):
+def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt, outer_split_num__ = None):
     
     """
     inputs
     ------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
-    pred_names                         list : (of strings) names of all predictors ordered like in X
-    feature_names                      list : (of strings) names of all features ordered like in X
+    X                    dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                  dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    pred_names              list of strings : names of all predictors ordered like in X
+    feature_names           list of strings : names of all features (lagged predictors) ordered like in X
     tgn                                 str : name of target
-    lt                                  int : lead time of prediction in weeks
-    " outer_split_num__                 int : counter of outer split for nested CV "
+    lt                                  int : lead time of prediction in units of timestep
+    " outer_split_num__                 int : counter for outer splits (only for nested CV case) "
 
     
     outputs
     -------
     pred                  dict of pd.Series : time series predicted by the RR model for the train_full and test time periods  
-    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of time series predicted by the RR model for the train_full and test time periods (only for no CV case) " 
+    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of time series predicted by the RR model for the train_full 
+                                              and test time periods (only for no CV case) " 
     " best_a                    dict of int : best alpha for Ridge (only if optimize_linear_hyperparameters) "
     
     """   
     
     print_model_name('Ridge Regressor')
+    
     ## Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None
     
@@ -544,7 +568,8 @@ def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt,
     if dictionary['cv_type'] == 'none': rr_ens = {key:sklearn.base.clone(rr) for key in X['train_full_bootstrap']}
 
     # Train with train_full
-    if dictionary['verbosity'] > 1: print('******************************************* TRAIN MODEL WITH TRAIN_FULL *********************************************')
+    if dictionary['verbosity'] > 1: 
+        print('******************************************* TRAIN MODEL WITH TRAIN_FULL *********************************************')
     rr.fit(X['train_full'], y['train_full']) 
     ## Plot regression coefficients 
     if dictionary['verbosity'] > 1: show_coeffs(rr, 'RR', pred_names, feature_names, tgn, lt, outer_split_num__)
@@ -553,7 +578,8 @@ def train_test_ridge_regressor(X, y, pred_names, feature_names, tgn, lt,
     ## Initialize prediction dictionaries
     pred, pred_ensemble = [{'train_full': '', 'test': ''} for i in range(2)]    
     for subset in ['train_full', 'test']:   
-        if dictionary['verbosity'] > 1: print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
+        if dictionary['verbosity'] > 1: 
+            print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
         if dictionary['cv_type'] == 'none':
             ### Make ensenble of predictions based on models trained on subsets of train_full
             pred_ensemble[subset] = np.stack([rr_ens[key].fit(X['train_full_bootstrap'][key], y['train_full_bootstrap'][key]).predict(X[subset]) for key in X['train_full_bootstrap']])
@@ -586,19 +612,20 @@ def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt,
     """
     inputs
     ------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
-    pred_names                         list : (of strings) names of all predictors ordered like in X
-    feature_names                      list : (of strings) names of all features ordered like in X
+    X                    dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                  dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    pred_names              list of strings : names of all predictors ordered like in X
+    feature_names           list of strings : names of all features (lagged predictors) ordered like in X
     tgn                                 str : name of target
-    lt                                  int : lead time of prediction in weeks
-    " outer_split_num__                 int : counter of outer split for nested CV "
+    lt                                  int : lead time of prediction in units of timestep
+    " outer_split_num__                 int : counter for outer splits (only for nested CV case) "
 
     
     outputs
     -------       
     pred                  dict of pd.Series : time series predicted by the RFR model for the train_full and test time periods  
-    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of time series predicted by the RFR model for the train_full and test time periods (only for no CV case) " 
+    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of time series predicted by the RFR model for the train_full 
+                                              and test time periods (only for no CV case) " 
     " best_hp                   dict of int : best hyperparameters (only if optimize_rf_hyperparameters) "
     
     """   
@@ -612,7 +639,8 @@ def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt,
     if dictionary['optimize_rf_hyperparam'] is False:
         rfr = quick_choose_random_forest_hyperparameters(tgn, lt, outer_split_num_ = outer_split_num__) 
     elif dictionary['optimize_rf_hyperparam']:
-        if dictionary['verbosity'] > 1: print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
+        if dictionary['verbosity'] > 1: 
+            print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
         rfr, best_hp = optimize_random_forest_hyperparameters(X, y, dictionary['metric_regr'], tgn, lt, outer_split_num___ = outer_split_num__)
     ### Initialize ensemble for uncertainty estimation
     if dictionary['cv_type'] == 'none': rfr_ens = {key:sklearn.base.clone(rfr) for key in X['train_full_bootstrap']}
@@ -633,7 +661,8 @@ def train_test_random_forest_regressor(X, y, pred_names, feature_names, tgn, lt,
     pred, pred_ensemble = [{'train_full': '', 'test': ''} for i in range(2)]
     
     for subset in ['train_full', 'test']:   
-        if dictionary['verbosity'] > 1: print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
+        if dictionary['verbosity'] > 1: 
+            print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
         if dictionary['cv_type'] == 'none':
             ### Make ensenble of predictions based on models trained on subsets of train_full
             pred_ensemble[subset] = np.stack([rfr_ens[key].fit(X['train_full_bootstrap'][key], y['train_full_bootstrap'][key]).predict(X[subset]) for key in X['train_full_bootstrap']])
@@ -665,31 +694,34 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, outer_
     """
     inputs
     -------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
-    pred_names                         list : (of strings) names of all predictors ordered like in X
-    feature_names                      list : (of strings) names of all features ordered like in X
+    X                    dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                  dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    pred_names              list of strings : names of all predictors ordered like in X
+    feature_names           list of strings : names of all features (lagged predictors) ordered like in X
     tgn                                 str : name of target
-    lt                                  int : lead time of prediction in weeks
-    " outer_split_num__                 int : counter of outer split for nested CV "
-    " inner_split_num__                 int : counter of inner split for nested CV "
+    lt                                  int : lead time of prediction in units of timestep
+    " outer_split_num__                 int : counter for outer splits (only for nested CV case) "
+    " inner_split_num__                 int : counter for inner splits (only for nested CV case) "
 
     
     outputs
     -------
     pred                  dict of pd.Series : binary time series predicted by the RC model for the train_full and test time periods  
-    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of binary time series predicted by the RC model for the train_full and test time periods (only for no CV case) " 
+    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of binary time series predicted by the RC model for the train_full 
+                                              and test time periods (only for no CV case) " 
     pred_proba            dict of pd.Series : probability time series predicted by the RC model for the train_full and test time periods  
-    " pred_proba_ensemble dict of pd.Series : ensemble for uncertainty estimation of probability time series predicted by the RC model for the train_full and test time periods (only for no CV case) " 
+    " pred_proba_ensemble dict of pd.Series : ensemble for uncertainty estimation of probability time series predicted by the RC model for the train_full 
+                                              and test time periods (only for no CV case) " 
     " best_a                    dict of int : best alpha for Ridge (only if optimize_linear_hyperparameters) "
     
     """   
         
+    print_model_name('Ridge Classifier') 
+    
     # Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None
     
-    # Choose model
-    print_model_name('Ridge Classifier')        
+    # Initialize linear classification model and its ensemble      
     if dictionary['optimize_linear_hyperparam'] is False: rc = RidgeClassifierwithProba(alpha = 1.0, normalize = False, max_iter = 1000)
     else: 
         if dictionary['verbosity'] > 1: print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
@@ -711,7 +743,8 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, outer_
     # Train    
     if dictionary['calibrate_linear']: 
         ## Train calibrated model for probabilistic prediction
-        if dictionary['verbosity'] > 1: print('******************************************* TRAIN', model_type.upper(), 'MODEL FOR PROBA PRED WITH TRAIN_FULL *********************************************')    
+        if dictionary['verbosity'] > 1: 
+            print('******************************************* TRAIN', model_type.upper(), 'MODEL FOR PROBA PRED WITH TRAIN_FULL *********************************************')    
         ### Individual prediction
         for key in X['train']: # Key is not relevant in the case of no CV, only one train and vali sets (added for formatting reasons)
             rc_base.fit(X['train'][key], y['train'][key])
@@ -724,7 +757,8 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, outer_
                 rc_ens_calib[key] = CalibratedClassifierCV(rc_ens_base[key], method = 'sigmoid', cv = 'prefit', n_jobs = dictionary['n_cores'])  
                 rc_ens_calib[key].fit(X['vali_oob'][key], y['vali_oob'][key])         
     ## Train non-calibrated model
-    if dictionary['verbosity'] > 1: print('******************************************* TRAIN NON-CALIBRATED MODEL WITH TRAIN_FULL *********************************************')    
+    if dictionary['verbosity'] > 1: 
+        print('******************************************* TRAIN NON-CALIBRATED MODEL WITH TRAIN_FULL *********************************************')    
     ### Find best threshold to binarize probability prediction (use non-calibrated model which corresponds to the binary classification)
     best_th = choose_best_proba_threshold_classi(rc, 'RC', X, y, tgn, lt, outer_split_num__ = outer_split_num__)   
     ### Individual prediction
@@ -740,7 +774,8 @@ def train_test_ridge_classifier(X, y, pred_names, feature_names, tgn, lt, outer_
     pred, pred_proba, pred_proba_4bin = [{'train_full': '', 'test': ''} for i in range(3)] 
     pred_ensemble, pred_proba_ensemble, pred_proba_4bin_ensemble = [{'train_full': [], 'test': []} for i in range(3)] 
     for subset in 'train_full', 'test':  
-        if dictionary['verbosity'] > 1: print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')    
+        if dictionary['verbosity'] > 1: 
+            print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')    
         if dictionary['cv_type'] == 'none': 
             ### Make ensemble of predictions based on models trained on subsets of train_full
             for key in X['train_full_bootstrap']: 
@@ -811,34 +846,38 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
     """
     inputs
     -------
-    X                    dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                  dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
-    pred_names                         list : (of strings) names of all predictors ordered like in X
-    feature_names                      list : (of strings) names of all features ordered like in X
+    X                    dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                  dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    pred_names              list of strings : names of all predictors ordered like in X
+    feature_names           list of strings : names of all features (lagged predictors) ordered like in X
     tgn                                 str : name of target
-    lt                                  int : lead time of prediction in weeks
-    " outer_split_num__                 int : counter of outer split for nested CV "
+    lt                                  int : lead time of prediction in units of timestep
+    " outer_split_num__                 int : counter for outer splits (only for nested CV case) "
 
     
     outputs
     -------
     pred                  dict of pd.Series : binary time series predicted by the RFC model for the train_full and test time periods  
-    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of binary time series predicted by the RFC model for the train_full and test time periods (only for no CV case) " 
+    " pred_ensemble       dict of pd.Series : ensemble for uncertainty estimation of binary time series predicted by the RFC model for the train_full 
+                                              and test time periods (only for no CV case) " 
     pred_proba            dict of pd.Series : probability time series predicted by the RFC model for the train_full and test time periods  
-    " pred_proba_ensemble dict of pd.Series : ensemble for uncertainty estimation of probability time series predicted by the RFC model for the train_full and test time periods (only for no CV case) "   
+    " pred_proba_ensemble dict of pd.Series : ensemble for uncertainty estimation of probability time series predicted by the RFC model for the train_full 
+                                              and test time periods (only for no CV case) "   
     " best_hp                   dict of int : best hyperparameters (only if optimize_rf_hyperparameters) "
     
     """  
 
+    print_model_name('Random Forest Classifier')  
+    
     # Set outer split number to None for non-nested CV
     if dictionary['cv_type'] == 'none': outer_split_num__ = None 
     
-    # Initialize Classification Random Forest model with best hyperparameters
-    print_model_name('Random Forest Classifier')        
+    # Initialize Classification Random Forest model with best hyperparameters      
     if dictionary['optimize_rf_hyperparam'] is False:
         rfc = quick_choose_random_forest_hyperparameters(tgn, lt, outer_split_num_ = outer_split_num__)
     else: 
-        if dictionary['verbosity'] > 1: print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
+        if dictionary['verbosity'] > 1: 
+            print('************************************** OPTIMIZE ON VALIDATION DATA ****************************************')
         rfc, best_hp = optimize_random_forest_hyperparameters(X, y, dictionary['metric_classi'], tgn, lt, outer_split_num___ = outer_split_num__)      
     ## Initialize calibrated model
     if dictionary['calibrate_rf']: 
@@ -857,7 +896,8 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
     # Train  
     if dictionary['calibrate_rf']: 
         ## Train calibrated model for probabilistic prediction
-        if dictionary['verbosity'] > 1: print('******************************************* TRAIN', model_type.upper(), 'MODEL FOR PROBA PRED WITH TRAIN_FULL *********************************************')       
+        if dictionary['verbosity'] > 1: 
+            print('******************************************* TRAIN', model_type.upper(), 'MODEL FOR PROBA PRED WITH TRAIN_FULL *********************************************')       
         ### Individual prediction
         for key in X['train']: # Key is not relevant in the case of no CV, only one train and vali sets (added for formatting reasons)
             rfc_base.fit(X['train'][key], y['train'][key])
@@ -870,7 +910,8 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
                 rfc_ens_calib[key] = CalibratedClassifierCV(rfc_ens_base[key], method = 'sigmoid', cv = 'prefit', n_jobs = dictionary['n_cores'])  
                 rfc_ens_calib[key].fit(X['vali_oob'][key], y['vali_oob'][key]) 
     ## Train non-calibrated model
-    if dictionary['verbosity'] > 1: print('******************************************* TRAIN NON-CALIBRATED MODEL FOR BINARY PRED WITH TRAIN_FULL *********************************************')  
+    if dictionary['verbosity'] > 1: 
+        print('******************************************* TRAIN NON-CALIBRATED MODEL FOR BINARY PRED WITH TRAIN_FULL *********************************************')  
     ## Find best threshold to binarize probability prediction (use non-calibrated model which corresponds to the binary classification)
     best_th = choose_best_proba_threshold_classi(rfc, 'RFC', X, y, tgn, lt, outer_split_num__ = outer_split_num__) 
     ### Individual prediction
@@ -892,7 +933,8 @@ def train_test_random_forest_classifier(X, y, pred_names, feature_names, tgn, lt
     pred, pred_proba, pred_proba_4bin = [{'train_full': '', 'test': ''} for i in range(3)] 
     pred_ensemble, pred_proba_ensemble, pred_proba_4bin_ensemble = [{'train_full': [], 'test': []} for i in range(3)] 
     for subset in 'train_full', 'test':  
-        if dictionary['verbosity'] > 1: print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
+        if dictionary['verbosity'] > 1: 
+            print('******************************************* PREDICT', subset.upper(), 'DATA *********************************************')
         if dictionary['cv_type'] == 'none':
             ### Make ensenble of predictions based on models trained on subsets of train_full
             for key in X['train_full_bootstrap']: 
@@ -966,43 +1008,33 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
     """
     inputs
     ------
-    X                            dict of xr.Dataset : predictors in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods 
-    y                          dict of xr.DataArray : target in train, train_full (and its ensemble for uncertainty estimation if no CV), vali, and test time periods
-    persist_forecast                   xr.DataArray : persistence forecast of target for train_full and testing time period
-    clim_forecast                      xr.DataArray : climatology forecast of target for train_full and testing time period
-    ecmwf_forecast                     xr.DataArray : ECMWF forecast of target for testing time period
+    X                            dict of xr.Dataset : predictors in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    y                          dict of xr.DataArray : target in train, train_full, vali, and test time periods (+ ensembles if no CV)
+    persist_forecast                   xr.DataArray : persistence forecast of target for train_full and test time period
+    clim_forecast                      xr.DataArray : climatology forecast of target for train_full and test time period
+    ecmwf_forecast                     xr.DataArray : ECMWF forecast of target for test time period
     start_date_test_                            str : start date of test time period
-    predictor_names_                           list : (of strings) names of all predictors ordered like in X
-    feature_names_                             list : (of strings) names of all predictors ordered like in X
+    predictor_names_                list of strings : names of all predictors ordered like in X
+    feature_names_                  list of strings : names of all features (lagged predictors) ordered like in X
     tg_name_                                    str : name of target
-    _lead_time_                                 int : lead time of prediction in weeks
-    " outer_split_num                           int : counter of outer splits "
+    _lead_time_                                 int : lead time of prediction in units of timestep
+    " outer_split_num                           int : counter for outer splits (only for nested CV case) "
 
 
     outputs
     -------
-    None. Plots ROC AUC and Precision-Recall curves
-          Saves best hyperparameters to file if hyperparameter optimization
+    None. Plots ROC AUC, PR, and reliability curves for classification
+          Plots probability histogram for classification
+          Saves best hyperparameters to file if hyperparameter optimization is True
           Saves time series to file
           Plots metrics table
           Saves metrics to file
-          Plots time series and lagged correlation plots for regression
+          Plots time series and lagged correlation plots for regression (for a particular lead time)
     
     """
     
-    # **Bias/variance trade off:**
-    # 
-    #     a) Bias: "The bias error is an error from erroneous assumptions in the learning algorithm. High bias can cause an algorithm to miss the relevant relations between features and target outputs (underfitting)."
-    # 
-    #     b) Variance: "The variance is an error from sensitivity to small fluctuations in the training set. High variance can cause an algorithm to model the random noise in the training data, rather than the intended outputs (overfitting)."
-    # 
-    # **Solutions:** 
-    # 
-    #     a) Smaller weights
-    # 
-    #     b) Optimum degree of polynomial (n) in case of non-linear (>1) or of depth for a tree (hyperparameterisation)
-    # 
-    # **Model choice:** Choose models at different end of the bias-variance trade off:
+
+    # Choose models at different end of the bias-variance trade off:
     # 
     #     1. Regression // 2. Classification
     # 
@@ -1010,17 +1042,18 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
     # 
     #         1.2. Random Forest Regressor // 2.2. Random Forest Classifier (low bias, high variance)
     
-    # Set outer split number to None for the case of non-nested CV
+    # Set outer split number to None for the case of no CV
     if dictionary['cv_type'] == 'none': outer_split_num = None
-    # Set train_full_bootstrap ensembles to None for the case of nested CV
+    
+    # Set ensembles to None for the case of nested CV
     if dictionary['cv_type'] == 'nested':
         for subset in ['train_full_bootstrap', 'vali_oob', 'train_th_ens', 'vali_th_ens']:
             X[subset], y[subset] = [None for i in range(2)]
        
-    #Train models
+    # Train models and make predictions
     if dictionary['train_models']: 
         ## 1. Regression
-        # **For continuous variables: t2m**
+        # **For continuous targets: t2m**
         if 'bin' not in tg_name_:
             ### 1.1. Ridge Regressor (RR)
             pred_rr, pred_rr_ensemble, best_hyperparam_linear = train_test_ridge_regressor(X, 
@@ -1041,7 +1074,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
                                                                                                  outer_split_num__ = outer_split_num)
 
         ## 2. Classification 
-        # **For binary variables: hw_bin_2in7, hw_bin_1SD, hw_bin_15SD**
+        # **For binary targets: hw_bin_1SD, hw_bin_15SD**
         elif 'bin' in tg_name_:
             ### 2.1. Ridge Classifier (RC)
             pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble, best_hyperparam_linear = train_test_ridge_classifier(X, 
@@ -1068,7 +1101,7 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
             else:
                 save_name = 'best_linear_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '.npy'
             save_to_file(best_hyperparam_linear, dictionary['path_hyperparam'] + 'data/linear/', save_name, 'np')        
-        # Save best hyperparameters for RF's 
+        # Save best hyperparameters for RFs 
         if dictionary['optimize_rf_hyperparam']:            
             if outer_split_num is not None:
                 save_name = 'best_rf_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '_outer_split_' + str(outer_split_num) + '.nc'
@@ -1076,13 +1109,17 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
                 save_name = 'best_rf_hyperparam_' + tg_name_ + '_lead_time_' + str(_lead_time_) + '.nc'
             save_to_file(best_hyperparam_rf, dictionary['path_hyperparam'] + 'data/rf/', save_name, 'nc')
             
-    # Read old saved predictions if model training deactivated
+    # Read old saved predictions by the ML models (time series) if model training deactivated
     else: 
         if 'bin' not in tg_name_:
-                 pred_rr, pred_rr_ensemble, pred_rfr, pred_rfr_ensemble = read_old_regr_ml_forecasts(tg_name_, _lead_time_, outer_split_num_ = outer_split_num)
+                 pred_rr, pred_rr_ensemble, pred_rfr, pred_rfr_ensemble = read_old_regr_ml_forecasts(tg_name_, 
+                                                                                                     _lead_time_, 
+                                                                                                     outer_split_num_ = outer_split_num)
         if 'bin' in tg_name_:
                  (pred_rc, pred_rc_ensemble, pred_proba_rc, pred_proba_rc_ensemble,
-                  pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble) = read_old_classi_ml_forecasts(tg_name_, _lead_time_, outer_split_num_ = outer_split_num)
+                  pred_rfc, pred_rfc_ensemble, pred_proba_rfc, pred_proba_rfc_ensemble) = read_old_classi_ml_forecasts(tg_name_, 
+                                                                                                                       _lead_time_, 
+                                                                                                                       outer_split_num_ = outer_split_num)
         
         
     ## 4. Metrics    
@@ -1091,37 +1128,83 @@ def pred_algorithm(X, y, persist_forecast, clim_forecast, ecmwf_forecast,
         ### 4.1. Plot metrics table
         if 'bin' not in tg_name_:
             pred_type = 'regr'            
-            metrics = build_metrics_regr(y[subset], pred_rr[subset], pred_rfr[subset],
-                                         persist_forecast[subset], clim_forecast[subset], 
-                                         tg_name_, _lead_time_, subset, 
-                                         predictions_rr_ensemble = pred_rr_ensemble[subset], predictions_rfr_ensemble = pred_rfr_ensemble[subset], 
-                                         ecmwf = ecmwf_forecast[subset], outer_split_num_ = outer_split_num)                   
+            metrics = build_metrics_regr(y[subset], 
+                                         pred_rr[subset], 
+                                         pred_rfr[subset],
+                                         persist_forecast[subset], 
+                                         clim_forecast[subset], 
+                                         tg_name_, 
+                                         _lead_time_, 
+                                         subset, 
+                                         predictions_rr_ensemble = pred_rr_ensemble[subset], 
+                                         predictions_rfr_ensemble = pred_rfr_ensemble[subset], 
+                                         ecmwf = ecmwf_forecast[subset], 
+                                         outer_split_num_ = outer_split_num)                   
         elif 'bin' in tg_name_:
             pred_type = 'classi'
-            metrics_proba = build_metrics_proba_classi(y[subset], pred_proba_rc[subset], pred_proba_rfc[subset], 
-                                                       persist_forecast[subset], clim_forecast[subset], 
-                                                       tg_name_, _lead_time_, subset, 
-                                                       predictions_proba_rc_ensemble = pred_proba_rc_ensemble[subset], predictions_proba_rfc_ensemble = pred_proba_rfc_ensemble[subset],
-                                                       ecmwf = ecmwf_forecast[subset], outer_split_num_ = outer_split_num)   
+            metrics_proba = build_metrics_proba_classi(y[subset], 
+                                                       pred_proba_rc[subset], 
+                                                       pred_proba_rfc[subset], 
+                                                       persist_forecast[subset], 
+                                                       clim_forecast[subset], 
+                                                       tg_name_, 
+                                                       _lead_time_, 
+                                                       subset, 
+                                                       predictions_proba_rc_ensemble = pred_proba_rc_ensemble[subset], 
+                                                       predictions_proba_rfc_ensemble = pred_proba_rfc_ensemble[subset],
+                                                       ecmwf = ecmwf_forecast[subset], 
+                                                       outer_split_num_ = outer_split_num)   
             
-            metrics = build_metrics_classi(y[subset], pred_rc[subset], pred_rfc[subset], 
-                                           persist_forecast[subset], clim_forecast[subset], 
-                                           tg_name_, _lead_time_, subset, 
-                                           predictions_rc_ensemble = pred_rc_ensemble[subset], predictions_rfc_ensemble = pred_rfc_ensemble[subset],
-                                           ecmwf = ecmwf_forecast[subset], outer_split_num_ = outer_split_num)
+            metrics = build_metrics_classi(y[subset], 
+                                           pred_rc[subset], 
+                                           pred_rfc[subset], 
+                                           persist_forecast[subset], 
+                                           clim_forecast[subset], 
+                                           tg_name_, 
+                                           _lead_time_, 
+                                           subset, 
+                                           predictions_rc_ensemble = pred_rc_ensemble[subset], 
+                                           predictions_rfc_ensemble = pred_rfc_ensemble[subset],
+                                           ecmwf = ecmwf_forecast[subset], 
+                                           outer_split_num_ = outer_split_num)
         ### 4.2. Save metrics
         if 'bin' in tg_name_: 
             save_metrics(metrics_proba, 'proba_' + pred_type, subset, tg_name_, _lead_time_, outer_split_num_ = outer_split_num)
         save_metrics(metrics, pred_type, subset, tg_name_, _lead_time_, outer_split_num_ = outer_split_num)  
         
         
-    ### 5. Plots regr
+    ### 5. Regression plots for a particular lead time
     if 'bin' not in tg_name_:
-        ## Plot prediction against test data
-        plot_pred_time_series(y['test'], pred_rr['test'], pred_rfr['test'], persist_forecast['test'], clim_forecast['test'], ecmwf_forecast['test'], _lead_time_, tg_name_, outer_split_num_ = outer_split_num)
-        plot_zoomed_in_pred_time_series(y['test'], pred_rr['test'], pred_rfr['test'], persist_forecast['test'], clim_forecast['test'], ecmwf_forecast['test'], start_date_test_, _lead_time_, tg_name_, outer_split_num_ = outer_split_num)   
-        ## Plot cross-correlation between predicted and real value
-        plot_cross_corr(y['test'], pred_rr['test'].flatten(), pred_rfr['test'].flatten(), ecmwf_forecast['test'], persist_forecast['test'], _lead_time_, tg_name_, outer_split_num_ = outer_split_num)
+        ## Plot prediction time series of test data
+        plot_pred_time_series(y['test'], 
+                              pred_rr['test'], 
+                              pred_rfr['test'], 
+                              persist_forecast['test'], 
+                              clim_forecast['test'], 
+                              ecmwf_forecast['test'], 
+                              _lead_time_, 
+                              tg_name_, 
+                              outer_split_num_ = outer_split_num)
+        plot_zoomed_in_pred_time_series(y['test'], 
+                                        pred_rr['test'], 
+                                        pred_rfr['test'], 
+                                        persist_forecast['test'], 
+                                        clim_forecast['test'], 
+                                        ecmwf_forecast['test'], 
+                                        start_date_test_, 
+                                        _lead_time_, 
+                                        tg_name_, 
+                                        outer_split_num_ = outer_split_num)   
+        
+        ## Plot cross-correlation between ML forecasts and ground truth and ML forecasts and persistence forecast for test time period
+        plot_cross_corr(y['test'], 
+                        pred_rr['test'].flatten(), 
+                        pred_rfr['test'].flatten(), 
+                        ecmwf_forecast['test'], 
+                        persist_forecast['test'], 
+                        _lead_time_, 
+                        tg_name_, 
+                        outer_split_num_ = outer_split_num)
 
 
 
@@ -1134,13 +1217,15 @@ def prepro_part2_and_prediction(tg_name, lead_time_):
     inputs
     ------
     tg_name                   str : name of target
-    lead_time_                int : lead time of prediction
+    lead_time_                int : lead time of prediction in units of timestep
 
 
     outputs
     -------
 
-    None. Saves metrics, plots, best hyperparameters and time series to files. 
+    None. Calls reference forecasts and prediction function, which save time series, tables, and plots. 
+    
+    This function is called in the no CV case. 
     
     """
 
@@ -1251,7 +1336,7 @@ def prepro_part2_and_prediction(tg_name, lead_time_):
     #---------------------------------------------------------------------------------------------------------------------------------------#    
     #---------------------------------------------------------------------------------------------------------------------------------------#  
     # Prediction
-    ## Adapt formats of train and vali to fit nested CV
+    ## Adapt formats of train and vali to fit nested CV (pred_algorithm must be able to handle inputs from both no CV and nested CV)
     key = 'inner_split_1'
     for subset in ['train', 'vali']:
         X[subset], y[subset] = {key: X[subset]}, {key: y[subset]}
@@ -1271,13 +1356,15 @@ def prepro_part2_and_prediction_nested_cv(tg_name, lead_time_):
     inputs
     ------
     tg_name                   str : name of target
-    lead_time_                int : lead time of prediction
+    lead_time_                int : lead time of prediction in units of timestep
 
 
     outputs
     -------
 
-    None. Saves metrics, plots, best hyperparameters and time series to files. 
+    None. Calls reference forecasts and prediction function, which save time series, tables, and plots. 
+    
+    This function is called in the nested CV case.  
     
     """
 

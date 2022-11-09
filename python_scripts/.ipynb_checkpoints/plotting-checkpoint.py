@@ -31,7 +31,8 @@ from sklearn.metrics import (precision_recall_curve,
 
 # Import own functions
 ## Metrics
-from metrics import roc_auc_score, pr_auc_score
+from metrics import (roc_auc_score, 
+                     pr_auc_score)
 ## Utils
 from utils import (filter_dates_like, 
                    final_day_of_month, 
@@ -59,7 +60,7 @@ def show_multiple_time_series(dset):
 
       outputs
       -------
-        None. Plots the time series. 
+        None. Plots the time series for each of the variables in dset one after another. 
 
     """ 
    
@@ -115,8 +116,8 @@ def show_first_x_eofs(eofs_, x):
     """
       inputs
       -------
-        eofs_                      xr.Dataset : containing x EOFs i.e. lat-lon maps
-        x                                 int : # EOFs you want to plot
+        eofs_                      xr.Dataset : containing 'x' EOFs i.e. lat-lon maps
+        x                                 int : number of EOFs you want to plot
 
 
       outputs
@@ -127,7 +128,7 @@ def show_first_x_eofs(eofs_, x):
     
     for i in range(0,x):
         eof = eofs_.sel(mode = i)
-        print('Eof number ', i + 1)
+        print('EOF number ', i + 1)
         eof.plot.contourf(vmin = -0.1, vmax = 0.1, levels = 9, cmap = 'coolwarm')
         plt.show()
         plt.close()
@@ -143,7 +144,7 @@ def show_hyperparameters(tgn):
 
     outputs
     -------
-    None.  Prints all hyperparameters for the no cross-validation case and saves them to file
+    None.  Prints all hyperparameters (linear + random forest) for the no CV case as table and saves the table to file.
     
     """   
     
@@ -184,20 +185,20 @@ def plot_pred_time_series(y, predictions_rr, predictions_rfr, persistence, clima
     """
     inputs
     ------
-    y                    pd.Series : time series of the true target
-    predictions_rr       np.array  : time series of the predicted target (same length and time as y) by the RR model
-    predictions_rfr      np.array  : time series of the predicted target (same length and time as y) by the RFR model
-    persistence         pd.Series  : time series of the target's persistence forecast (same length and time as y)
-    climatology          np.array  : time series of the target's climatology forecast (same length and time as y)
-    ecmwf             xr.DataArray : time series of the target's ECMWF forecast (same length and time as y)
-    lead_time                  int : Lead time of prediction
-    tgn                        str : name of target variable 
-    " outer_split_num_          int : counter for outer splits "
+    y                                pd.Series : time series of the true target
+    predictions_rr                   np.array  : time series of the predicted target (same length and time as y) by the RR model
+    predictions_rfr                  np.array  : time series of the predicted target (same length and time as y) by the RFR model
+    persistence                     pd.Series  : time series of the target's persistence forecast (same length and time as y)
+    climatology                      np.array  : time series of the target's climatology forecast (same length and time as y)
+    ecmwf                         xr.DataArray : time series of the target's ECMWF forecast (same length and time as y)
+    lead_time                              int : lead time of prediction in units of timestep
+    tgn                                    str : name of target variable 
+    " outer_split_num_                     int : counter for outer splits (only for nested CV case) "
 
 
     outputs
     -------
-    None.  Displays time series cutting only the summer months plot
+    None.  Plots time series for the selected season only for all years.
     
     """
 
@@ -265,20 +266,20 @@ def plot_zoomed_in_pred_time_series(y, predictions_rr, predictions_rfr, persiste
     """
     inputs
     ------
-    y                    pd.Series : time series of the true target
-    predictions_rr        np.array : time series of the predicted target (same length and time as y) by the RR model
-    predictions_rfr       np.array : time series of the predicted target (same length and time as y) by the RFR model
-    persistence          pd.Series : time series of the target's persistence forecast (same length and time as y)
-    climatology           np.array : time series of the target's climatology forecast (same length and time as y)
-    ecmwf             xr.DataArray : time series of the target's ECMWF forecast
-    start_date_test            str : start date of test time period
-    lead_time                  int : Lead time of prediction
-    tgn                        str : name of target variable 
-    " outer_split_num_          int : counter for outer splits "
+    y                                pd.Series : time series of the true target
+    predictions_rr                    np.array : time series of the predicted target (same length and time as y) by the RR model
+    predictions_rfr                   np.array : time series of the predicted target (same length and time as y) by the RFR model
+    persistence                      pd.Series : time series of the target's persistence forecast (same length and time as y)
+    climatology                       np.array : time series of the target's climatology forecast (same length and time as y)
+    ecmwf                         xr.DataArray : time series of the target's ECMWF forecast
+    start_date_test                        str : start date of test time period
+    lead_time                              int : lead time of prediction in units of timestep
+    tgn                                    str : name of target variable 
+    " outer_split_num_                     int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
-    None.  Displays the zoomed-in plot
+    None.  Plots the zoomed-in time series (only one year). 
     
     """
 
@@ -334,20 +335,20 @@ def plot_pred_time_series_all_lead_times():
     """
     inputs
     ------
-    y                    pd.Series : time series of the true target
-    predictions_rr       np.array  : time series of the predicted target (same length and time as y) by the RR model
-    predictions_rfr      np.array  : time series of the predicted target (same length and time as y) by the RFR model
-    persistence         pd.Series  : time series of the target's persistence forecast (same length and time as y)
-    climatology          np.array  : time series of the target's climatology forecast (same length and time as y)
-    ecmwf             xr.DataArray : time series of the target's ECMWF forecast (same length and time as y)
-    lead_time                  int : Lead time of prediction
-    tgn                        str : name of target variable 
-    " outer_split_num_          int : counter for outer splits "
+    y                               pd.Series : time series of the true target
+    predictions_rr                  np.array  : time series of the predicted target (same length and time as y) by the RR model
+    predictions_rfr                 np.array  : time series of the predicted target (same length and time as y) by the RFR model
+    persistence                    pd.Series  : time series of the target's persistence forecast (same length and time as y)
+    climatology                     np.array  : time series of the target's climatology forecast (same length and time as y)
+    ecmwf                        xr.DataArray : time series of the target's ECMWF forecast (same length and time as y)
+    lead_time                             int : lead time of prediction in units of timestep
+    tgn                                   str : name of target variable 
+    " outer_split_num_                    int : counter for outer splits (only for nested CV case) "
 
 
     outputs
     -------
-    None.  Displays time series cutting only the summer months plot for all lead times in a multiplot format
+    None.  Plots time series for the selected season only for all years and all lead times in a multiplot format. 
     
     """
 
@@ -359,7 +360,8 @@ def plot_pred_time_series_all_lead_times():
     
     # Prepare plot
     ## Define the ranges for the dates
-    drange = [[datetime.date(i, dictionary['initial_month'], 1),datetime.date(i, dictionary['final_month'], 30)] for i in range(index[0].year, index[-1].year + 1)]
+    drange = [[datetime.date(i, dictionary['initial_month'], 1),
+               datetime.date(i, dictionary['final_month'], 30)] for i in range(index[0].year, index[-1].year + 1)]
     ## Create as many subplots as there are date ranges
     fig, axes = plt.subplots(nrows = len(dictionary['lead_times']), ncols = len(drange), sharey = True, figsize = (20, 5 * len(dictionary['lead_times'])))
     fig.subplots_adjust(bottom = 0.3, wspace = 0)
@@ -448,18 +450,18 @@ def plot_cross_corr(y, predictions_rr, predictions_rfr, predictions_ecmwf, persi
     """
     inputs
     ------
-    y                     pd.Series : time series of the true target
-    predictions_rr        np.array  : time series of the predicted target (same
-                                      length and time as y) by the RR model
-    predictions_rfr       np.array  : time series of the predicted target (same
-                                      length and time as y) by the RFR model
-    predictions_ecmwf     np.array  : time series of the predicted target (same
-                                      length and time as y) by the RFR model
-    persistence           np.array  : time series of the target's persistence (same
-                                      length and time as y)
-    lead_time                   int : Lead time of prediction
-    tgn                         str : name of target variable 
-    " outer_split_num_          int : counter for outer splits "
+    y                             pd.Series : time series of the true target
+    predictions_rr                np.array  : time series of the predicted target (same
+                                              length and time as y) by the RR model
+    predictions_rfr               np.array  : time series of the predicted target (same
+                                              length and time as y) by the RFR model
+    predictions_ecmwf             np.array  : time series of the predicted target (same
+                                              length and time as y) by the RFR model
+    persistence                   np.array  : time series of the target's persistence (same
+                                              length and time as y)
+    lead_time                           int : lead time of prediction in units of timestep
+    tgn                                 str : name of target variable 
+    " outer_split_num_                  int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
@@ -472,16 +474,79 @@ def plot_cross_corr(y, predictions_rr, predictions_rfr, predictions_ecmwf, persi
     
     # Correlations to Ground Truth & to persistence
     ## RR
-    plt.xcorr(y, predictions_rr, maxlags = maxlagnum, normed = True, color = 'crimson', label = 'RR-Ground Truth', linewidth = 1, usevlines = False, linestyle = '-', marker = 'o', markersize = 5)
-    plt.xcorr(persistence, predictions_rr, maxlags = maxlagnum, normed = True, color = 'crimson', label = 'RR-Persistence', linewidth = 1, usevlines = False, linestyle = '--', marker = 'o', markerfacecolor = 'none', markersize = 5)
+    plt.xcorr(y, 
+              predictions_rr, 
+              maxlags = maxlagnum, 
+              normed = True, 
+              color = 'crimson', 
+              label = 'RR-Ground Truth', 
+              linewidth = 1, 
+              usevlines = False, 
+              linestyle = '-', 
+              marker = 'o', 
+              markersize = 5)
+    plt.xcorr(persistence, 
+              predictions_rr, 
+              maxlags = maxlagnum, 
+              normed = True, 
+              color = 'crimson', 
+              label = 'RR-Persistence', 
+              linewidth = 1, 
+              usevlines = False, 
+              linestyle = '--', 
+              marker = 'o', 
+              markerfacecolor = 'none', 
+              markersize = 5)
     ## RFR
-    plt.xcorr(y, predictions_rfr, maxlags = maxlagnum, normed = True, color = 'dodgerblue', label = 'RFR-Ground Truth', linewidth = 1, usevlines = False, linestyle = '-', marker = 'o', markersize = 5)
-    plt.xcorr(persistence, predictions_rfr, maxlags = maxlagnum, normed = True, color = 'dodgerblue', label = 'RFR-Persistence', linewidth = 1, usevlines = False, linestyle = '--', marker = 'o', markerfacecolor = 'none', markersize = 5)
+    plt.xcorr(y, 
+              predictions_rfr, 
+              maxlags = maxlagnum, 
+              normed = True, 
+              color = 'dodgerblue', 
+              label = 'RFR-Ground Truth', 
+              linewidth = 1, 
+              usevlines = False, 
+              linestyle = '-', 
+              marker = 'o', 
+              markersize = 5)
+    plt.xcorr(persistence, 
+              predictions_rfr, 
+              maxlags = maxlagnum, 
+              normed = True, 
+              color = 'dodgerblue', 
+              label = 'RFR-Persistence', 
+              linewidth = 1, 
+              usevlines = False, 
+              linestyle = '--', 
+              marker = 'o', 
+              markerfacecolor = 'none', 
+              markersize = 5)
     ## ECMWF
     if predictions_ecmwf is not None: 
         predictions_ecmwf = predictions_ecmwf[tgn + '_mean']
-        plt.xcorr(filter_dates_like(y, predictions_ecmwf), predictions_ecmwf, maxlags = maxlagnum, normed = True, color = 'orange', label = 'ECMWF-Ground Truth', linewidth = 1, usevlines = False, linestyle = '-', marker = 'o', markersize = 5)  
-        plt.xcorr(filter_dates_like(persistence, predictions_ecmwf), predictions_ecmwf, maxlags = maxlagnum, normed = True, color = 'orange', label = 'ECMWF-Persistence', linewidth = 1, usevlines = False, linestyle = '--', marker = 'o', markerfacecolor = 'none', markersize = 5)  
+        plt.xcorr(filter_dates_like(y, predictions_ecmwf), 
+                  predictions_ecmwf, 
+                  maxlags = maxlagnum, 
+                  normed = True, 
+                  color = 'orange', 
+                  label = 'ECMWF-Ground Truth', 
+                  linewidth = 1, 
+                  usevlines = False, 
+                  linestyle = '-', 
+                  marker = 'o', 
+                  markersize = 5)  
+        plt.xcorr(filter_dates_like(persistence, predictions_ecmwf), 
+                  predictions_ecmwf, 
+                  maxlags = maxlagnum, 
+                  normed = True, 
+                  color = 'orange', 
+                  label = 'ECMWF-Persistence', 
+                  linewidth = 1, 
+                  usevlines = False, 
+                  linestyle = '--', 
+                  marker = 'o', 
+                  markerfacecolor = 'none',
+                  markersize = 5)  
         
     ## Vertical line at 0 lag time (prediction)
     plt.axvline(0, color = 'black', label = 'Prediction time', linewidth = 1, linestyle = '-')
@@ -497,8 +562,10 @@ def plot_cross_corr(y, predictions_rr, predictions_rfr, predictions_ecmwf, persi
     plt.legend()
     ## Save plot
     dir_name = dictionary['path_plots'] + 'test/regr/cross_correlation/'    
-    if dictionary['cv_type'] == 'nested': save_name = dir_name + 'cross_corr_' + tgn + '_lead_time_' + str(lead_time) + '_weeks_outer_split_' + str(outer_split_num_) + '.pdf'
-    else: save_name = dir_name + 'cross_corr_' + tgn + '_lead_time_' + str(lead_time) + '_weeks.pdf'    
+    if dictionary['cv_type'] == 'nested': 
+        save_name = dir_name + 'cross_corr_' + tgn + '_lead_time_' + str(lead_time) + '_weeks_outer_split_' + str(outer_split_num_) + '.pdf'
+    else: 
+        save_name = dir_name + 'cross_corr_' + tgn + '_lead_time_' + str(lead_time) + '_weeks.pdf'    
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     plt.savefig(save_name, bbox_inches = 'tight')
@@ -517,10 +584,10 @@ def plot_roc_curve(fpr, tpr, subset, tg_name, model_name_, _lead_time, best_th_i
     subset                         str : 'vali', 'train', 'train_full', 'test'
     tg_name                        str : target name
     model_name_                    str : name of the ML model 
-    _lead_time                     int : lead time for prediction
+    _lead_time                     int : lead time for prediction in units of timestep
     " best_th_ix                   int : index of best probability threshold "
-    " outer_split_num_             int : counter for outer splits "
-    " inner_split_num_             int : counter for inner splits "
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
+    " inner_split_num_             int : counter for inner splits (only for nested CV case) "
     
     outputs
     -------
@@ -562,15 +629,15 @@ def plot_pr_curve(precision, recall, subset, tg_name, model_name_, _lead_time, b
     """
     inputs
     ------
-    precision                  ndarray : False Positive Rate for each probability threshold               
-    recall                     ndarray : True Positive Rate for each probability threshold  
+    precision                  ndarray : precision for each probability threshold               
+    recall                     ndarray : recall for each probability threshold  
     subset                         str : 'vali', 'train', 'train_full', 'test'
     tg_name                        str : target name
     model_name_                    str : name of the ML model 
-    _lead_time                     int : lead time for prediction
+    _lead_time                     int : lead time for prediction in units of timestep
     " best_th_ix                   int : index of best probability threshold "
-    " outer_split_num_             int : counter for outer splits "
-    " inner_split_num_             int : counter for inner splits "
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
+    " inner_split_num_             int : counter for inner splits (only for nested CV case) "
     
     outputs
     -------
@@ -610,18 +677,18 @@ def plot_calibration_curve(y_true, y_prob, subset, tg_name, model_name_, _lead_t
     """
     inputs
     ------
-    y_true                   pd.Series : False Positive Rate for each probability threshold               
-    y_prob                     ndarray : True Positive Rate for each probability threshold  
+    y_true                   pd.Series : binary ground truth time series              
+    y_prob                   pd.Series : probabilities of belonging to the class 1 (being a HW) time series  
     subset                         str : 'vali', 'train', 'train_full', 'test'
     tg_name                        str : target name
     model_name_                    str : name of the ML model 
-    _lead_time                     int : lead time for prediction
-    " outer_split_num_             int : counter for outer splits "
-    " inner_split_num_             int : counter for inner splits "
+    _lead_time                     int : lead time for prediction in units of timestep
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
+    " inner_split_num_             int : counter for inner splits (only for nested CV case) "
     
     outputs
     -------
-    None. Plots the calibration curve
+    None. Plots the calibration (or reliability) curve.
     
     """ 
     
@@ -658,14 +725,14 @@ def plot_proba_histogram(pred_proba_, subset, tgn_, _model_name_, _lead_time_, b
     """
     inputs
     ------
-    pred_proba_              pd.Series : probabilities of belonging to the class 1 (being a HW)
+    pred_proba_              pd.Series : probabilities of belonging to the class 1 (being a HW) time series
     subset                         str : 'vali', 'train', 'train_full', 'test'
     tgn_                           str : target name
     _model_name_                   str : name of the ML model 
-    _lead_time_                    int : lead time for prediction
+    _lead_time_                    int : lead time for prediction in units of timestep
     " best_threshold             float : best probability threshold "  
-    " outer_split_num_             int : counter for outer splits "
-    " inner_split_num_             int : counter for inner splits "
+    " outer_split_num_             int : counter for outer splits (only for nested CV case) "
+    " inner_split_num_             int : counter for inner splits (only for nested CV case) "
     
     outputs
     -------
@@ -704,14 +771,14 @@ def classification_plots(y, pred_proba, subset_, tgn_, model_name, lt_, best_th_
     """
     inputs
     ------
-    y                        pd.Series : ground truth for heatwave index (binary)
-    pred_proba               pd.Series : probabilities of belonging to the class 1 (being a HW)
+    y                        pd.Series : binary ground truth time series  
+    pred_proba               pd.Series : probabilities of belonging to the class 1 (being a HW) time series
     subset_                        str : time period (e.g., 'test')
     tgn_                           str : target name
-    model_name                     str : name of the ML model ('RC', 'RFC')
-    lt_                            int : lead time for prediction
+    model_name                     str : name of the ML model ('RC' or 'RFC')
+    lt_                            int : lead time for prediction in units of timestep
     " best_th_                   float : best probability threshold "  
-    " _outer_split_num_            int : counter for outer splits "
+    " _outer_split_num_            int : counter for outer splits (only for nested CV case) "
     
     outputs
     -------
@@ -747,7 +814,7 @@ def plot_class_distr(index, tgn_):
     """
     inputs
     ------
-    index                 xr.DataArray : binary weekly heat wave index            
+    index                 xr.DataArray : binary heat wave index time series         
     tgn_                           str : target name
     
     outputs
@@ -782,17 +849,17 @@ def plot_tp(metrics, ax, metrics_std = None):
     inputs
     ------
     metrics                  xr.Dataset : dataset of metrics data with dimensions (forecast x metric)
-    ax                  matplotlib axis : location to plcae the TP plot next to the other classification metrics
-    "metrics_std             xr.Dataset : dataset of the standard deviation of the ensemble of metrics data with dimensions (forecast x metric) (only for nested CV)"
+    ax                  matplotlib axis : location to place the TPR bar plot next to the other binary classification metrics
+    "metrics_std             xr.Dataset : dataset of the standard deviation of the ensemble of metrics with dimensions (forecast x metric) (only for nested CV)"
 
 
     outputs
     -------
-    None.  Plots a bar chart with TPR and FPR to evaluate (and compare) the performance 
-    of the models. x-axis: lead time, y-axis: TPR and FPR
+    None.  Plots a bar chart with TPR and FPR to evaluate (and compare) the performance of the models. 
+           x-axis: lead time, y-axis: TPR (coloured bars) and FPR (stippled bars)
     
-        TPR: True Positive Rate
-        FPR: False Positive Rate (events that were predicted but not detected) = FP/(TN+FN)
+        TPR: True Positive Rate (events that were predicted and detected)
+        FPR: False Positive Rate (events that were predicted but not detected)
     
     """
         
@@ -801,7 +868,7 @@ def plot_tp(metrics, ax, metrics_std = None):
     bar_width = 0.12
     ## x axis
     xlabels = list(metrics.lead_time.values)
-    ### The label locations
+    ### Set label locations
     x = np.arange(len(xlabels)) 
     ax.set_xticks(x)
     ax.set_xticklabels(xlabels, rotation = 0)
@@ -866,23 +933,23 @@ def plot_metrics(metrics_full, prediction_type):
     """
     inputs
     ------
-    metrics_full            dict of xr.Dataset : dataset of metrics data with dimensions (forecast x metric x lead_time "x statistics")
-    prediction_type                        str : regr, classi or proba_classi
+    metrics_full            dict of xr.Dataset : dataset of metrics data with dimensions (forecast x metric x lead_time "x statistics (only for nested CV)")
+    prediction_type                        str : 'regr', 'classi' or 'proba_classi'
 
 
     outputs
     -------
-    None.  Plots n graphs (one for each metric) to evaluate (and compare) the performance 
-    of the models. x-axis: lead time, y-axis: the metric
+    None.  Plots M graphs (one for each metric) to evaluate (and compare) the performance of the models. 
+           x-axis: lead time, y-axis: the metric
     
                 regr:    RMSE: Root Mean Squared Error
                          Corr: Correlation
         
         proba_classi: ROC AUC: Receiver Operating Characteristic Area Under Curve
-                      BS: Brier score 
+                           BS: Brier score 
         
               classi:     EDI: Extremal Dependence Index
-                          TPR-FPR bar plot
+                      TPR-FPR: True Positive Rate and False Positive Rate (bar plot)
         
     
     """
@@ -1075,23 +1142,23 @@ def show_coeffs(_model_, model_name, _pred_names, _feature_names, _tgn_, _lead_t
     """
     inputs
     ------
-    _model_                     fct : trained model
-    model_name                  str : 'RR' or 'RC'
-    _pred_names         list of str : names of all predictors
-    _feature_names      list of str : names of all features 
-    _tgn_                       str : name of target
-    _lead_time_                 int : lead time of prediction
-    " outer_split_num_          int : counter for outer splits "
+    _model_                                fct : trained model
+    model_name                             str : 'RR' or 'RC'
+    _pred_names                    list of str : names of all predictors
+    _feature_names                 list of str : names of all features (lagged predictors) 
+    _tgn_                                  str : name of target
+    _lead_time_                            int : lead time of prediction in units of timestep
+    " outer_split_num_                     int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
-    None.  Prints the coefficients of the Ridge Regressor and saves them to file
+    None. Prints the regression coefficients of the Ridge Regressor/Classifier, plots them in descending order as a bar plot and saves them to file (.csv format).
     
     """
 
     coeffs = _model_.coef_
     
-    ## Print coefficients
+    # Print coefficients
     if dictionary['verbosity'] > 1: 
         intercept = _model_.intercept_
         if model_name == 'RC': intercept = intercept[0]
@@ -1103,14 +1170,14 @@ def show_coeffs(_model_, model_name, _pred_names, _feature_names, _tgn_, _lead_t
         [print('Predictor: {:20} Coefficient: {}'.format(*pair)) for pair in sorted_feature_coeffs]
     
     if dictionary['verbosity'] > 2:         
-        # Sum of all coeffs
+        ## Sum of all coeffs
         sum_coeffs = 0  
         for i in range(len(_feature_names)):
             sum_coeffs = sum_coeffs + coeffs[i]
         print('Sum of ' + model_name + ' coeffs: ', round(sum_coeffs, 4))
             
         
-    ## Plot coefficients
+    # Plot coefficients
     coef = Series(coeffs, _feature_names).sort_values(key = np.abs)
     coef = np.flip(coef, axis = 0)
     coef.plot(kind = 'bar', figsize = (2 + len(coeffs) * 0.25, 5))
@@ -1156,17 +1223,17 @@ def show_rf_imp(_rf_, _pred_names, _feature_names, _tgn_, _lead_time_, outer_spl
 
     """
     inputs
-    ------
-    _rf_                     fct : trained RF model
-    _pred_names      list of str : names of all predictors
-    _feature_names   list of str : names of all features 
-    _tgn_                    str : name of target
-    _lead_time_              int : lead time of prediction
-    " outer_split_num_       int : counter for outer splits "
+    ------            
+    _rf_                                 fct : trained RF model
+    _pred_names                  list of str : names of all predictors
+    _feature_names               list of str : names of all features (lagged predictors)
+    _tgn_                                str : name of target
+    _lead_time_                          int : lead time of prediction in units of timestep
+    " outer_split_num_                   int : counter for outer splits (only for nested CV case) "
 
     outputs
     -------
-    None.  Prints the importances of the predictors for the Random Forest and saves them to file
+    None. Prints the feature importances of the Random Forest, plots them in descending order as a bar plot and saves them to file (.csv format).
     
     """
 
@@ -1203,8 +1270,10 @@ def show_rf_imp(_rf_, _pred_names, _feature_names, _tgn_, _lead_time_, outer_spl
         pred_type = 'regr'
         model_name = 'RFR'
     dir_name = dictionary['path_plots'] + 'train_full/' + pred_type + '/' + _tgn_ + '/features/' + model_name + '/'
-    if dictionary['cv_type'] == 'nested': save_name = dir_name + model_name + '_feature_imp_' + _tgn_ + '_lead_time_' + str(_lead_time_) + '_weeks_outer_split_' + str(outer_split_num_) + '.pdf'
-    else: save_name = dir_name + model_name + '_feature_imp_' + _tgn_ + '_lead_time_' + str(_lead_time_) + '_weeks.pdf'
+    if dictionary['cv_type'] == 'nested': 
+        save_name = dir_name + model_name + '_feature_imp_' + _tgn_ + '_lead_time_' + str(_lead_time_) + '_weeks_outer_split_' + str(outer_split_num_) + '.pdf'
+    else: 
+        save_name = dir_name + model_name + '_feature_imp_' + _tgn_ + '_lead_time_' + str(_lead_time_) + '_weeks.pdf'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     plt.savefig(save_name, bbox_inches = 'tight')
@@ -1236,15 +1305,15 @@ def plot_data_histogram(t2m_anom):
     """
       inputs
       -------
-        t2m_anom                             xr.DataArray : 2m temperature anomalies in Central European box (time series)
+        t2m_anom                             xr.DataArray : 2m-temperature anomalies in Central European box (time series)
 
 
       outputs
       -------
-        None. Plots histogram of data dsitribution of train_full set, that illustrates the different heatwave definitions. The blue events correspond to the histogram of 
-        standarized (μ = 0, σ = 1) temperature anomalies. The vertical blue line marks the mean (μ = 0) of the distribution. The stippled orange (red) 
-        line marks +1 (+1.5) standard deviations (σ) from the mean. The +1σ (+1.5σ) index is defined as 1 for the events found on the right of the orange 
-        (red) line and as 0 for the events located to the left of it.
+        None. Plots histogram of data dsitribution (full time period), that illustrates the different heatwave definitions. The blue events correspond to 
+        the histogram of standarized (μ = 0, σ = 1) temperature anomalies. The vertical blue line marks the mean (μ = 0) of the distribution. The stippled 
+        orange (red) line marks +1 (+1.5) standard deviations (σ) from the mean. The +1σ (+1.5σ) index is defined as 1 for the events found on the right 
+        of the orange (red) line and as 0 for the events located to the left of it.
 
     """ 
     
@@ -1256,6 +1325,7 @@ def plot_data_histogram(t2m_anom):
     train_full_slice = slice(str(int(dictionary['splits'].sel(slice_type = 'train_full', edge = 'start'))), 
                              str(int(dictionary['splits'].sel(slice_type = 'train_full', edge = 'end'))))
     t2m_anom = t2m_anom.sel(time = train_full_slice)
+    
     # Standarize data again
     t2m_anom = (t2m_anom.groupby('time.dayofyear'))/(t2m_anom.groupby('time.dayofyear').std('time'))
     
@@ -1268,14 +1338,15 @@ def plot_data_histogram(t2m_anom):
     ### Best fit of data
     (mu, sigma) = norm.fit(t2m_anom)
     plt.axvline(np.round(mu, decimals = 0), color = 'cornflowerblue', label = 'Std T$_{anom}$ $\mu$=%.0f' %(abs(mu)))
-
+    ## Title
     if dictionary['plot_fig_title']: 
         plt.title(r'$\mathrm{Histogram\ of\ the\ standarized\ temperature\ anomalies:}\ \mu=%.0f,\ \sigma=%.0f$' %(abs(mu), sigma))
+    ## Add grid
     plt.grid(True)
     ### Add 1SD and 1.5SD lines
     plt.axvline(1, color = 'orange', label = 'Std T$_{anom}$ at +1$\sigma$', linestyle = '--')
     plt.axvline(1.5, color = 'darkred', label = 'Std T$_{anom}$ at +1.5$\sigma$', linestyle = '--')
-
+    ## Formatting
     plt.legend(fontsize = 16, loc = 'upper left')
     plt.xticks(fontsize = 14)
     plt.yticks(fontsize = 14)
@@ -1293,7 +1364,28 @@ def plot_data_histogram(t2m_anom):
 
 def plot_lagged_correlation_heatmap(target_pos, y, p_matrix, long_predictor_names, N, tau_max):
     
-    # Plot Heat map showing the causality strength of each driver for different time lags        
+    """
+      inputs
+      -------
+        target_pos                             int : position of target among the targets
+        y                                   matrix : lagged linear correlations between each of the predictors and the target with dimensions 
+                                                     (tau_max x N)
+        p_matrix                            matrix : p-values for each lagged linear correlation with dimensions like y
+        long_predictor_names       list of strings : print long names of predictors to be shown in plot
+        N                                      int : number of predictors
+        tau_max                                int : number of time lags shown in plot in units of timestep (e.g., tau_max = 6 and timestep = '7D' 
+                                                     shows correlations between predictor and target time series with a shift of up to 6 weeks)
+
+
+      outputs
+      -------
+        None. Plots heatmap of linear lagged correlations between the target and each of the predictors with hatched non-significant cells at 
+              alpha_level significance level.
+              x-axis: lags in range [1, tau_max], y-axis: N predictors
+
+    """ 
+    
+    # Plot
     ## Prepare plot
     fig = plt.figure(figsize = [tau_max, N/1.5])
     sns.set_theme(palette = 'vlag')
@@ -1303,7 +1395,7 @@ def plot_lagged_correlation_heatmap(target_pos, y, p_matrix, long_predictor_name
     tmin = -.8
     tmax = .8
     ax = fig.add_subplot(111)
-    # Define x axis labels
+    ## Define x axis labels
     x_axis_labels = np.arange(1, tau_max + 1, step = 1)
     heat = sns.heatmap(y[1:, target_pos, 1:tau_max + 1], 
                        xticklabels = x_axis_labels, 
@@ -1342,8 +1434,26 @@ def plot_lagged_correlation_heatmap(target_pos, y, p_matrix, long_predictor_name
     plt.close()
     
     
-# Draw box
+# Add lat-lon box to axis
 def add_sub_region_box(ax_, sub_region_, color_, lw, ls = None):
+    
+    """
+      inputs
+      -------
+        ax_                         matplotlib axis : original axis
+        sub_region_                          Region : lat-lon coordinates
+        color_                                  str : line color
+        lw                                      int : line width in pt
+        ls                                      int : line style (e.g., '-')
+    
+
+
+      outputs
+      -------
+        ax_                        matplotlib axis : updated axis containing the new subregion box
+
+    """ 
+    
     if ls == None: ls = '-'
     geom = geometry.box(minx = sub_region_.lonmin, maxx = sub_region_.lonmax, miny = sub_region_.latmin, maxy = sub_region_.latmax)
     ax_.add_geometries([geom], crs = ccrs.PlateCarree(), alpha = 1, edgecolor = color_, facecolor = 'None', linewidth = lw, linestyle = ls, label = str(sub_region_.region_name))
@@ -1351,6 +1461,18 @@ def add_sub_region_box(ax_, sub_region_, color_, lw, ls = None):
     
     
 def plot_latlon_boxes():
+    
+    """
+      inputs
+      -------
+        None.
+
+
+      outputs
+      -------
+        None. Plots map with latitude-longitude boxes defined in const.py and used to define the predictors.
+
+    """ 
     
     # Choose map projection and define origin coordinate frame
     geo = ccrs.PlateCarree(central_longitude = -90.) 
@@ -1377,11 +1499,12 @@ def plot_latlon_boxes():
         if str(box.box.values) != 'ce_obs':
             Region = namedtuple('Region', field_names = ['region_name','lonmin','lonmax','latmin','latmax'])
             sub_region =  Region(
-                region_name = box.box.values,
-                lonmin = box[0][1],
-                lonmax = box[1][1],
-                latmin = box[1][0],
-                latmax = box[0][0])
+                                 region_name = box.box.values,
+                                 lonmin = box[0][1],
+                                 lonmax = box[1][1],
+                                 latmin = box[1][0],
+                                 latmax = box[0][0]
+                                )
             ax = add_sub_region_box(ax, sub_region, box_color, 4, ls = line)    
 
     # Add legend

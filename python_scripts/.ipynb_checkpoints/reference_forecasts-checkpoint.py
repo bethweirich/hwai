@@ -10,7 +10,10 @@ import numpy as np
 
 # Import own functions
 ## Utils
-from utils import compute_ones_percentage, save_time_series, standardize_data, compute_hw_bin_sd
+from utils import (compute_ones_percentage, 
+                   save_time_series, 
+                   standardize_data, 
+                   compute_hw_bin_sd)
 ## Preprocessing
 from preprocessing_part2 import select_season
 
