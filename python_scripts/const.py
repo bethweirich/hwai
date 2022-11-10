@@ -66,6 +66,7 @@ full_run = True
 prepro2 = True
 ### Do you want to train the ML models and predict the test set again (True) or read the ML model's forecasts of the test set from the last run (False)?
 ### train_models = False can only be run after a complete run (all lead times) with train_models = True 
+### prepro2 contains train_models (i.e., train_models = True only works if prepro2 = True) 
 train_models = True
 
 ### Do you want to optimize the hyperparameters for the linear models (True) or use default hyperparameters (False)? 
