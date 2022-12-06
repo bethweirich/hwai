@@ -50,8 +50,6 @@ num_lags = 4
 ### Select season
 initial_month = 5
 final_month = 9
-### Geopotential level in hPa
-geopotential_level = '500.'
 
 
 ## 1.4. Actions
@@ -208,7 +206,6 @@ dictionary = {
               'end_year': end_year,
               'boxes': boxes,
               'mean_type': mean_type,
-              'geopotential_level': geopotential_level,
               'calibrate_linear': calibrate_linear,
               'calibrate_rf': calibrate_rf,
               'full_run': full_run, 

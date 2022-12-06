@@ -35,7 +35,7 @@ def import_data():
     outputs
     -------
     t2m                     xr.DataArray : lat-lon grid x time series of 2m air temperature
-    z                       xr.DataArray : lat-lon grid x time series of Geopotential at selected vertical level (geopotential_level)
+    z                       xr.DataArray : lat-lon grid x time series of Geopotential at 500hPa vertical level
     sm                        xr.Dataset : 4 vertical levels x lat-lon grid x time series of Soil Water Volume Level
     sst                     xr.DataArray : lat-lon grid x time series of Sea Surface Temperature
     rain                    xr.DataArray : lat-lon grid x time series of total precipitation    
@@ -51,40 +51,19 @@ def import_data():
      access_sst_hadisst_file, 
      access_rain_eobs_file, 
      access_t2m_eobs_file) = (
-                                dictionary['path_raw_data'] + 'z_eraint.nc',
-                                dictionary['path_raw_data'] + 'sm_era5land.nc',
-                                dictionary['path_raw_data'] + 'sst_hadisst.nc',
-                                dictionary['path_raw_data'] + 'rain_eobs.nc',
-                                dictionary['path_raw_data'] + 't2m_eobs.nc'
+                                dictionary['path_raw_data'] + 'z500_eraint_daymean_1979-2019.nc',
+                                dictionary['path_raw_data'] + 'sm_era5land_daymean_1981-2019.nc',
+                                dictionary['path_raw_data'] + 'sst_hadisst_monmean_1870-2019.nc',
+                                dictionary['path_raw_data'] + 'rain_eobs_daymean_1950-2020.nc',
+                                dictionary['path_raw_data'] + 't2m_eobs_daymean_1950-2020.nc'
                             )
-    
-    
-    ## Only for CFC S2S users
-    #path_eraint = '/s2s/shared_data/Datasets/ERA-Int/'
-    #path_era5_land = '/s2s/weiriche/heat_waves/reanalysis/ERA5-Land/'
-    #path_hadisst = '/s2s/shared_data/Datasets/HadISST/'
-    #path_bernatj_data = '/home/bernatj/data/'
-    #path_eobs = '/s2s/shared_data/Datasets/E-OBS/'
-    #
-    #(access_z_eraint_file, 
-    # access_sm_era5land_file, 
-    # access_sst_hadisst_file, 
-    # access_rain_eobs_file, 
-    # access_t2m_eobs_file) = (
-    #                            path_eraint + 'phi/daymean/phi-eraint-37plevels-daymean-*',
-    #                            path_era5_land + 'sm/VSW_l1-4_1981-2019-daily.nc',
-    #                            path_hadisst + 'HadISST_monmean_1870-2019.nc',
-    #                            path_eobs + 'precip/daymean/rr_ens_mean_0.25deg_reg_v22.0e.nc',
-    #                            path_eobs + 't2m_mean/daymean/tg_ens_mean_0.25deg_reg_v22.0e.nc'
-    #                            )
-    
 
     # Load data and select vertical level for geopotential
     ## Target
     t2m = xr.open_dataset(access_t2m_eobs_file).tg.load()    
     ## Predictors        
     (z, sm, sst, rain) =  (
-                xr.open_mfdataset(access_z_eraint_file).phi.load().sel(level = dictionary['geopotential_level']),
+                xr.open_dataset(access_z_eraint_file).phi.load(),
                 xr.open_dataset(access_sm_era5land_file).load(),
                 xr.open_dataset(access_sst_hadisst_file).sst.load(),
                 xr.open_dataset(access_rain_eobs_file).rr.load()
