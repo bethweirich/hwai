@@ -21,7 +21,7 @@ eofs 1.4.0 <br/>
 In addition, the TIGRAMITE toolbox by J. Runge (https://github.com/jakobrunge/tigramite) is used for data visualization purposes. You only need to import it to run the *data_visualization.py* script.  
 
 ### Input data 
-The sources of the input data are listed in Table 1 in [1]. The raw data is not provided in this GitHub repository due to their large size. The pre-processed data (output from *preprocessing_part1.py*) and the ECMWF hindcasts are provided in the *hwai/data* folder, which allows the user to run all scripts (except for *preprocessing_part1.py*) without downloading any data. To run *preprocessing_part1.py*, the user must download the raw data and specify the path to the raw data files in *const.py*, under "path_raw_data". 
+The sources of the input data are listed in Table 1 in [1]. The raw data is not provided in this GitHub repository due to their large size. The pre-processed data (output from *preprocessing_part1.py*) and the ECMWF hindcasts are provided in the *hwai/data* folder, which allows the user to run all scripts (except for *preprocessing_part1.py*) without downloading any data. To run *preprocessing_part1.py*, the user must download the raw data and specify the path to the raw data files in *const.py*, under "path_raw_data". These raw data can be downloaded from an FTP server: ftp://iacftp.ethz.ch/pub_read/weiriche/hwai_raw_data (no username nor password required). 
 
 ### Code structure
 The code is split up into ten inter-connected Python scripts, located in the *python_scripts* folder: <br/>
