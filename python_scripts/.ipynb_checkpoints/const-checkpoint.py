@@ -110,15 +110,12 @@ n_cores = 30
 
 
 ## 1.7. Paths
-### Path to raw data 
-### Before running preprocessing_part1.py, THE RAW DATA (listed in Table 1 in [1]) MUST BE DOWNLOADED BY THE USER AND THE PATH TO THE FOLDER WITH SUBFILES: 
-### z_eraint.nc, 
-### sm_era5land.nc, 
-### sst_hadisst.nc, 
-### rain_eobs.nc, and
-### t2m_eobs.nc
-### MUST BE SPECIFIED UNDER "path_raw_data" BELOW:
-path_raw_data = None
+### Path to raw data
+#### For ETHZ IAC users: Before running preprocessing_part1.py, set path_raw_data = '/net/iacftp/ftp/pub_read/weiriche/hwai_raw_data/' below
+#### For external users: Before running preprocessing_part1.py, download the raw data (listed in Table 1 in [1]) from the FTP server (see README.md 
+#### file) and specifiy the path to the folder containing the files z500_eraint_daymean_1979-2019.nc, sm_era5land_daymean_1981-2019.nc, 
+#### sst_hadisst_monmean_1870-2019.nc, rain_eobs_daymean_1950-2020.nc, and t2m_eobs_daymean_1950-2020.nc under path_raw_data:
+path_raw_data = '/net/iacftp/ftp/pub_read/weiriche/hwai_raw_data/'
 ### Path to preprocessed data
 path_data = '../data/'
 ### Path to metrics
