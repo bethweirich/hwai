@@ -63,7 +63,7 @@ def import_data():
     t2m = xr.open_dataset(access_t2m_eobs_file).tg.load()    
     ## Predictors        
     (z, sm, sst, rain) =  (
-                xr.open_dataset(access_z_eraint_file).phi.load(),
+                xr.open_dataset(access_z_eraint_file).phi.load().drop(['level'], errors = 'ignore'),
                 xr.open_dataset(access_sm_era5land_file).load(),
                 xr.open_dataset(access_sst_hadisst_file).sst.load(),
                 xr.open_dataset(access_rain_eobs_file).rr.load()
@@ -293,8 +293,6 @@ def construct_dataset(t2m_sa_, z_sa_, sm_sa_, sea_sa_, sst_nwmed_sa_, sst_cnaa_s
 
     # Merge two datasets
     dset_sa_ = xr.merge([dset_sa_2, dset_sa_1])
-    ## Drop extra coordinates    
-    dset_sa_ = dset_sa_.drop(['level'], errors = 'ignore')
     
     return dset_sa_
 
@@ -437,7 +435,7 @@ def compute_climatology(dset):
     dset_clim = dset.groupby('time.dayofyear').mean('time')
     
     ## Smooth monthly
-    dset_clim_sm = dset_clim.pad(dayofyear = 15, mode = 'wrap').rolling(dayofyear = 31, center=True).mean().dropna(dim = 'dayofyear')
+    dset_clim_sm = dset_clim.pad(dayofyear = 15, mode = 'wrap').rolling(dayofyear = 31, center = True).mean().dropna(dim = 'dayofyear')
     
     ## Drop extra coordinates
     dset_clim_sm = dset_clim_sm.drop(['dayofyear'])    
@@ -508,7 +506,7 @@ def save_pred_and_targ(dset_anom_sa_, dset_clim_std_, t2m_, hw_bin_1SD_, hw_bin_
     
     # Specify objects
     obj_sa = dset_anom_sa_[['t2m_x', 'z', 'rain', 'sm', 'sea', 'sst_nwmed', 'sst_cnaa']]
-    obj_targets = xr.Dataset(data_vars={'t2m':(('time'), t2m_), 'hw_bin_1SD':(('time'), hw_bin_1SD_), 'hw_bin_15SD':(('time'), hw_bin_15SD_)}, 
+    obj_targets = xr.Dataset(data_vars={'t2m':(('time'), t2m_.data), 'hw_bin_1SD':(('time'), hw_bin_1SD_.data), 'hw_bin_15SD':(('time'), hw_bin_15SD_.data)}, 
                                 coords={'time': (t2m_.time)})
     
     # Save
