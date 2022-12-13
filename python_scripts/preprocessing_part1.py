@@ -508,7 +508,7 @@ def save_pred_and_targ(dset_anom_sa_, dset_clim_std_, t2m_, hw_bin_1SD_, hw_bin_
     
     # Specify objects
     obj_sa = dset_anom_sa_[['t2m_x', 'z', 'rain', 'sm', 'sea', 'sst_nwmed', 'sst_cnaa']]
-    obj_targets = xr.Dataset(data_vars={'t2m':(('time'), t2m_.data), 'hw_bin_1SD':(('time'), hw_bin_1SD_.data), 'hw_bin_15SD':(('time'), hw_bin_15SD_.data)}, 
+    obj_targets = xr.Dataset(data_vars={'t2m':(('time'), t2m_), 'hw_bin_1SD':(('time'), hw_bin_1SD_), 'hw_bin_15SD':(('time'), hw_bin_15SD_)}, 
                                 coords={'time': (t2m_.time)})
     
     # Save
