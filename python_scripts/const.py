@@ -115,7 +115,7 @@ n_cores = 30
 #### For external users: Before running preprocessing_part1.py, download the raw data (listed in Table 1 in [1]) from the FTP server (see README.md 
 #### file) and specifiy the path to the folder containing the files z500_eraint_daymean_1979-2019.nc, sm_era5land_daymean_1981-2019.nc, 
 #### sst_hadisst_monmean_1870-2019.nc, rain_eobs_daymean_1950-2020.nc, and t2m_eobs_daymean_1950-2020.nc under path_raw_data:
-path_raw_data = '/net/iacftp/ftp/pub_read/weiriche/hwai_raw_data/'
+path_raw_data = None
 ### Path to preprocessed data
 path_data = '../data/'
 ### Path to metrics
